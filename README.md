@@ -11,6 +11,7 @@ VSCode docker remote development environment collections.
 
 ## Requirements
 
-1. Docker (with Docker Buildkit)
-2. Docker Compose
-3. [yq](https://github.com/mikefarah/yq)
+1. VSCode
+2. Docker (with Docker Buildkit)
+3. Docker Compose
+4. [yq](https://github.com/mikefarah/yq)
