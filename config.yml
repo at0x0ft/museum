@@ -1,0 +1,106 @@
+---
+configs:
+  variables:
+    development:
+      - &docker_compose_path ./docker-compose.yml
+    base_shell:
+      - &docker_context ./docker
+      - &docker_file Dockerfile
+      - &container_service_name base_shell
+      - &container_working_directory /workspace
+      - &container_user_name vscode
+      - &extension_volume_name vscode-extensions
+      - &insider_extension_volume_name vscode-insider-extensions
+
+  vscode_devcontainer:
+    # For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+    # https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/docker-from-docker-compose
+    name: Test project.
+    dockerComposeFile:
+      # Enter your docker-compose.yml path in source file.
+      - *docker_compose_path
+    service: *container_service_name
+    workspaceFolder: *container_working_directory
+
+    # Use this environment variable if you need to bind mount your local source code into a new container.
+    remoteEnv:
+      LOCAL_WORKSPACE_FOLDER: ${localWorkspaceFolder}
+      CONTAINER_WORKSPACE_FOLDER: ${containerWorkspaceFolder}
+      PATH: ${containerWorkspaceFolder}/.devcontainer/bin/user:${containerEnv:PATH}
+      HISTFILE: ${containerWorkspaceFolder}/.devcontainer/.zhistory
+
+    # Set *default* container specific settings.json values on container create.
+    settings:
+      # common settings
+      terminal.integrated.cwd: ${containerWorkspaceFolder}/src
+      git-graph.maxDepthOfRepoSearch: 1
+      # language specific settings
+      # additional settings
+
+    # Add the IDs of extensions you want installed when the container is created.
+    extensions:
+      # common extensions
+      - ms-azuretools.vscode-docker
+      - wmaurer.vscode-jumpy
+      - oderwat.indent-rainbow
+      - mosapride.zenkaku
+      - christian-kohler.path-intellisense
+      - streetsidesoftware.code-spell-checker
+      - eamodio.gitlens
+      - mhutchie.git-graph
+      - yzhang.markdown-all-in-one
+      # language specific extensions
+      # additional extensions
+
+    # Use 'forwardPorts' to make a list of ports inside the container available locally.
+    # forwardPorts: []
+
+    # Use 'postCreateCommand' to run commands after the container is created.
+    # postCreateCommand: ""
+
+    # Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    remoteUser: *container_user_name
+
+  docker_compose:
+    version: "3.7"
+    services:
+      *container_service_name:
+        build:
+          context: *docker_context
+          dockerfile: *docker_file
+        volumes:
+          # Forwards the local Docker socket to the container.
+          - /var/run/docker.sock:/var/run/docker-host.sock
+          # Update this to wherever you want VS Code to mount the folder of your project
+          - yq::operator::join:
+              delim: ":"
+              strings:
+                - ..
+                - *container_working_directory
+                - cached
+          # Avoid reinstalling extensions and share them with named volume.
+          - yq::operator::join:
+              delim: ":"
+              strings:
+                - *extension_volume_name
+                - ${vscode_extension_path}
+          - yq::operator::join:
+              delim: ":"
+              strings:
+                - *insider_extension_volume_name
+                - ${vscode_insider_extension_path}
+        # Overrides default command so things don't shut down after the process ends.
+        entrypoint: /usr/local/share/docker-init.sh
+        command: sleep infinity
+        # Uncomment the next four lines if you will use a ptrace-based debuggers like C++, Go, and Rust.
+        # cap_add:
+        #  - SYS_PTRACE
+        # security_opt:
+        #   - seccomp:unconfined
+        # Uncomment the next line to use a non-root user for all processes.
+        user: *container_user_name
+        # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
+        # (Adding the "ports" property to this file will not forward from a Codespace.)
+    volumes:
+      *extension_volume_name:
+      *insider_extension_volume_name:
