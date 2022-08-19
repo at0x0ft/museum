@@ -42,5 +42,13 @@ func NodeStyleString(style yaml.Style) string {
 }
 
 func PrintNode(node *yaml.Node) {
-    fmt.Printf("Kind = %v, Style = %v, Tag = %s, Value = %v (Line = %v, Column = %v)\n", NodeKindString(node.Kind), NodeStyleString(node.Style), node.Tag, node.Value, node.Line, node.Column)
+    fmt.Printf(
+        "Kind = %v, Style = %v, Tag = %s, Value = %v (Line = %v, Column = %v)\n",
+        NodeKindString(node.Kind),
+        NodeStyleString(node.Style),
+        node.Tag,
+        node.Value,
+        node.Line,
+        node.Column
+    )
 }
