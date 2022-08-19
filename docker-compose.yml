@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  yq:
+    image: mikefarah/yq:4.27.2
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    entrypoint: yq
+
+  base: &base
+    image: golang:1.19
+    volumes:
+      - ./src/yaml_evaluator:/workspace
+    working_dir: /workspace
+
+  go:
+    <<: *base
+    entrypoint: go

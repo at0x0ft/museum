@@ -1,0 +1,63 @@
+---
+version: "0"
+
+variables:
+  common:
+    devcontainer_name: Test project.
+    docker_compose_path: ./docker-compose.yml
+    docker_context: ./docker
+    docker_file: Dockerfile
+    container_service_name: base_shell
+    container_working_directory: /workspace
+    container_user_name: vscode
+    extension_volume_name: vscode-extensions
+    insider_extension_volume_name: vscode-insider-extensions
+
+vscode_devcontainer:
+  # For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+  # https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/docker-from-docker-compose
+  name: !Var common.devcontainer_name
+  dockerComposeFile:
+    # Enter your docker-compose.yml path in source file.
+    - !Var common.docker_compose_path
+  service: !Var common.container_service_name
+  workspaceFolder: !Var common.container_working_directory
+
+  # Use this environment variable if you need to bind mount your local source code into a new container.
+  remoteEnv:
+    LOCAL_WORKSPACE_FOLDER: ${localWorkspaceFolder}
+    CONTAINER_WORKSPACE_FOLDER: ${containerWorkspaceFolder}
+    PATH: ${containerWorkspaceFolder}/.devcontainer/bin/user:${containerEnv:PATH}
+    HISTFILE: ${containerWorkspaceFolder}/.devcontainer/.zhistory
+
+  # Set *default* container specific settings.json values on container create.
+  settings:
+    # common settings
+    terminal.integrated.cwd: ${containerWorkspaceFolder}/src
+    git-graph.maxDepthOfRepoSearch: 1
+    # language specific settings
+    # additional settings
+
+  # Add the IDs of extensions you want installed when the container is created.
+  extensions:
+    # common extensions
+    - ms-azuretools.vscode-docker
+    - wmaurer.vscode-jumpy
+    - oderwat.indent-rainbow
+    - mosapride.zenkaku
+    - christian-kohler.path-intellisense
+    - streetsidesoftware.code-spell-checker
+    - eamodio.gitlens
+    - mhutchie.git-graph
+    - yzhang.markdown-all-in-one
+    # language specific extensions
+    # additional extensions
+
+  # Use 'forwardPorts' to make a list of ports inside the container available locally.
+  # forwardPorts: []
+
+  # Use 'postCreateCommand' to run commands after the container is created.
+  # postCreateCommand: ""
+
+  # Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+  remoteUser: !Var common.container_user_name
