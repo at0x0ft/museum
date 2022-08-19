@@ -19,7 +19,7 @@ func EvaluateVariable(node *yaml.Node, variableMap *map[string]map[string]string
 
     keys := strings.Split(node.Value, ".")
     if keyLength := len(keys); keyLength != 2 {
-        return fmt.Errorf("Variable key error (key length = %d).", keyLength)
+        return fmt.Errorf("Variable key error: key length (=%d) != 2.", keyLength)
     }
 
     if firstKeyVariables, ok1 := (*variableMap)[keys[0]]; ok1 {
