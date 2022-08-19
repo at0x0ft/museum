@@ -6,12 +6,6 @@ import (
     "gopkg.in/yaml.v3"
 )
 
-type Config struct {
-    Version string `yaml:"version"`
-    Variables map[string]map[string]string `yaml:"variables"`
-    VSCodeDevcontainer yaml.Node `yaml:"vscode_devcontainer"`
-}
-
 func EvaluateVariable(node *yaml.Node, variableMap *map[string]map[string]string) error {
     if node.Kind != yaml.ScalarNode || node.Style != yaml.TaggedStyle || node.Tag != "!Var" {
         return nil
