@@ -49,6 +49,6 @@ func PrintNode(node *yaml.Node) {
         node.Tag,
         node.Value,
         node.Line,
-        node.Column
+        node.Column,
     )
 }
