@@ -17,7 +17,6 @@ func IsSubstitutionTaggedNode(node *yaml.Node) bool {
     secondChildNode := node.Content[1]
     firstChildIsString := firstChildNode.Kind == yaml.ScalarNode && firstChildNode.Tag == "!!str"
     secondChildIsMap := secondChildNode.Kind == yaml.MappingNode && secondChildNode.Tag == "!!map"
-    fmt.Println(firstChildIsString, secondChildIsMap)
     return firstChildIsString && secondChildIsMap
 }
 
@@ -38,7 +37,6 @@ func EvaluateSubstitution(node *yaml.Node) error {
         return nil
     }
 
-    fmt.Println("This is substitution node.")
     substitutionString := node.Content[0].Value
     variableMap, err := getVariableMap(node.Content[1])
     if err != nil {
