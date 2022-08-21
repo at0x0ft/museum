@@ -14,6 +14,7 @@ const (
 type NodeInfo struct {
     Node *yaml.Node
     Path string
+    Terminal bool
 }
 
 func Traverse(node *yaml.Node, ch chan NodeInfo, order Order) {
@@ -21,8 +22,8 @@ func Traverse(node *yaml.Node, ch chan NodeInfo, order Order) {
     close(ch)
 }
 
-func sendNodeInfo(ch chan NodeInfo, node *yaml.Node, path string) {
-    ch <- NodeInfo{Node: node, Path: path}
+func sendNodeInfo(ch chan NodeInfo, node *yaml.Node, path string, terminal bool) {
+    ch <- NodeInfo{Node: node, Path: path, Terminal: terminal}
 }
 
 func traverseRecursive(node *yaml.Node, path string, ch chan NodeInfo, order Order) {
@@ -38,7 +39,7 @@ func traverseRecursive(node *yaml.Node, path string, ch chan NodeInfo, order Ord
 
 func traverseMapNode(node *yaml.Node, path string, ch chan NodeInfo, order Order) {
     if order == PreOrder {
-        sendNodeInfo(ch, node, path)
+        sendNodeInfo(ch, node, path, false)
     }
     for index := 0; index < len(node.Content); index += 2 {
         childKeyNode := node.Content[index]
@@ -46,41 +47,41 @@ func traverseMapNode(node *yaml.Node, path string, ch chan NodeInfo, order Order
         visitMapKeyNode(childKeyNode, childValueNode, path + childKeyNode.Value, ch, order)
     }
     if order == PostOrder {
-        sendNodeInfo(ch, node, path)
+        sendNodeInfo(ch, node, path, false)
     }
 }
 
 func visitMapKeyNode(node *yaml.Node, valueNode *yaml.Node, path string, ch chan NodeInfo, order Order) {
     if order == PreOrder {
-        sendNodeInfo(ch, node, path)
+        sendNodeInfo(ch, node, path, false)
     }
     traverseRecursive(valueNode, path, ch, order)
     if order == PostOrder {
-        sendNodeInfo(ch, node, path)
+        sendNodeInfo(ch, node, path, false)
     }
 }
 
 func traverseSequenceNode(node *yaml.Node, path string, ch chan NodeInfo, order Order) {
     if order == PreOrder {
-        sendNodeInfo(ch, node, path)
+        sendNodeInfo(ch, node, path, false)
     }
     for index, childNode := range node.Content {
         suffix := fmt.Sprintf("[%d]", index)
         traverseRecursive(childNode, path + suffix, ch, order)
     }
     if order == PostOrder {
-        sendNodeInfo(ch, node, path)
+        sendNodeInfo(ch, node, path, false)
     }
 }
 
 func traverseOtherNode(node *yaml.Node, path string, ch chan NodeInfo, order Order) {
     if order == PreOrder {
-        sendNodeInfo(ch, node, path)
+        sendNodeInfo(ch, node, path, len(node.Content) == 0)
     }
     for _, childNode := range node.Content {
         traverseRecursive(childNode, path, ch, order)
     }
     if order == PostOrder {
-        sendNodeInfo(ch, node, path)
+        sendNodeInfo(ch, node, path, len(node.Content) == 0)
     }
 }
