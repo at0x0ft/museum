@@ -28,7 +28,6 @@ func EvaluateEquals(node *yaml.Node) error {
     result := strconv.FormatBool(node.Content[0].Value == node.Content[1].Value)
     var newNodeStyle yaml.Style
     var newNodeContent []*yaml.Node
-    fmt.Println(result)
     node.Kind, node.Style, node.Tag, node.Value, node.Content = yaml.ScalarNode, newNodeStyle, "!!str", result, newNodeContent
     return nil
 }
