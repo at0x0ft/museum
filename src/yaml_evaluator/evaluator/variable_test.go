@@ -8,7 +8,7 @@ import (
 
 func TestNormalVarNode(t *testing.T) {
     varTaggedNode := yaml.Node{Kind: yaml.ScalarNode, Style: yaml.TaggedStyle, Tag: "!Var", Value: "common.hoge"}
-    varMap := map[string]map[string]string {"common": map[string]string {"hoge": "evaluated."}}
+    varMap := map[string]string{"common.hoge": "evaluated."}
 
     err := EvaluateVariable(&varTaggedNode, &varMap)
     if err != nil {
@@ -20,7 +20,7 @@ func TestNormalVarNode(t *testing.T) {
 
 func TestNotVariableNode(t *testing.T) {
     scalarValueNode := yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: "test"}
-    varMap := map[string]map[string]string {"common": map[string]string {"hoge": "evaluated."}}
+    varMap := map[string]string{"common.hoge": "evaluated."}
 
     err := EvaluateVariable(&scalarValueNode, &varMap)
     assert.Nil(t, err)
@@ -28,7 +28,7 @@ func TestNotVariableNode(t *testing.T) {
 
 func TestVariableNotFound(t *testing.T) {
     varTaggedNode := yaml.Node{Kind: yaml.ScalarNode, Style: yaml.TaggedStyle, Tag: "!Var", Value: "common.fuga"}
-    varMap := map[string]map[string]string {"foo": map[string]string {"hoge": "evaluated."}}
+    varMap := map[string]string{"common.hoge": "evaluated."}
 
     err := EvaluateVariable(&varTaggedNode, &varMap)
     assert.NotNil(t, err)
