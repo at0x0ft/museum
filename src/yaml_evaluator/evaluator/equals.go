@@ -1,7 +1,6 @@
 package evaluator
 
 import (
-    "fmt"
     "strconv"
     "gopkg.in/yaml.v3"
 )
