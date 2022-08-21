@@ -12,12 +12,6 @@ const (
     LetKey string = "let"
 )
 
-type Rule struct {
-    VarName string
-    RequireVariableKeys []string
-    Generate func(*[]string) string
-}
-
 func Parse(variables *yaml.Node) *map[string]string {
     _, argumentValueNode, err1 := findChildNodeWithKeyFromMap(variables, ArgumentsKey)
     if err1 != nil {
