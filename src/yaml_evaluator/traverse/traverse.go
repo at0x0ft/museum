@@ -1,6 +1,9 @@
 package traverse
 
-import "gopkg.in/yaml.v3"
+import (
+    "fmt"
+    "gopkg.in/yaml.v3"
+)
 
 type Order uint32
 const (
@@ -8,49 +11,76 @@ const (
     PostOrder
 )
 
-func Traverse(node *yaml.Node, ch chan *yaml.Node, order Order) {
-    traverseRecursive(node, ch, order)
+type NodeInfo struct {
+    Node *yaml.Node
+    Path string
+}
+
+func Traverse(node *yaml.Node, ch chan NodeInfo, order Order) {
+    traverseRecursive(node, "", ch, order)
     close(ch)
 }
 
-func traverseRecursive(node *yaml.Node, ch chan *yaml.Node, order Order) {
-    if node.Kind == yaml.MappingNode {
-        traverseMapNode(node, ch, order)
-    } else {
-        traverseOtherNode(node, ch, order)
+func sendNodeInfo(ch chan NodeInfo, node *yaml.Node, path string) {
+    ch <- NodeInfo{Node: node, Path: path}
+}
+
+func traverseRecursive(node *yaml.Node, path string, ch chan NodeInfo, order Order) {
+    switch node.Kind {
+    case yaml.MappingNode:
+        traverseMapNode(node, path + ".", ch, order)
+    case yaml.SequenceNode:
+        traverseSequenceNode(node, path, ch, order)
+    default:
+        traverseOtherNode(node, path, ch, order)
     }
 }
 
-func traverseOtherNode(node *yaml.Node, ch chan *yaml.Node, order Order) {
+func traverseMapNode(node *yaml.Node, path string, ch chan NodeInfo, order Order) {
     if order == PreOrder {
-        ch <- node
-    }
-    for _, childNode := range node.Content {
-        traverseRecursive(childNode, ch, order)
-    }
-    if order == PostOrder {
-        ch <- node
-    }
-}
-
-func traverseMapNode(node *yaml.Node, ch chan *yaml.Node, order Order) {
-    if order == PreOrder {
-        ch <- node
+        sendNodeInfo(ch, node, path)
     }
     for index := 0; index < len(node.Content); index += 2 {
-        visitMapKeyNode(node.Content[index], node.Content[index + 1], ch, order)
+        childKeyNode := node.Content[index]
+        childValueNode := node.Content[index + 1]
+        visitMapKeyNode(childKeyNode, childValueNode, path + childKeyNode.Value, ch, order)
     }
     if order == PostOrder {
-        ch <- node
+        sendNodeInfo(ch, node, path)
     }
 }
 
-func visitMapKeyNode(node *yaml.Node, valueNode *yaml.Node, ch chan *yaml.Node, order Order) {
+func visitMapKeyNode(node *yaml.Node, valueNode *yaml.Node, path string, ch chan NodeInfo, order Order) {
     if order == PreOrder {
-        ch <- node
+        sendNodeInfo(ch, node, path)
     }
-    traverseRecursive(valueNode, ch, order)
+    traverseRecursive(valueNode, path, ch, order)
     if order == PostOrder {
-        ch <- node
+        sendNodeInfo(ch, node, path)
+    }
+}
+
+func traverseSequenceNode(node *yaml.Node, path string, ch chan NodeInfo, order Order) {
+    if order == PreOrder {
+        sendNodeInfo(ch, node, path)
+    }
+    for index, childNode := range node.Content {
+        suffix := fmt.Sprintf("[%d]", index)
+        traverseRecursive(childNode, path + suffix, ch, order)
+    }
+    if order == PostOrder {
+        sendNodeInfo(ch, node, path)
+    }
+}
+
+func traverseOtherNode(node *yaml.Node, path string, ch chan NodeInfo, order Order) {
+    if order == PreOrder {
+        sendNodeInfo(ch, node, path)
+    }
+    for _, childNode := range node.Content {
+        traverseRecursive(childNode, path, ch, order)
+    }
+    if order == PostOrder {
+        sendNodeInfo(ch, node, path)
     }
 }
