@@ -7,7 +7,7 @@ variables:
       devcontainer_name: Test project.
       docker_compose_path: ./docker-compose.yml
       docker_context: ./docker
-      docker_file: Dockerfile
+      dockerfile: Dockerfile
       host_mountpoint_path: ".."
       container_service_name: base_shell
       container_working_directory: /workspace
@@ -21,12 +21,12 @@ configs:
   vscode_devcontainer:
     # For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
     # https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/docker-from-docker-compose
-    name: !Var common.devcontainer_name
+    name: !Var arguments.common.devcontainer_name
     dockerComposeFile:
       # Enter your docker-compose.yml path in source file.
-      - !Var common.docker_compose_path
-    service: !Var common.container_service_name
-    workspaceFolder: !Var common.container_working_directory
+      - !Var arguments.common.docker_compose_path
+    service: !Var arguments.common.container_service_name
+    workspaceFolder: !Var arguments.common.container_working_directory
 
     # Use this environment variable if you need to bind mount your local source code into a new container.
     remoteEnv:
@@ -65,32 +65,32 @@ configs:
     # postCreateCommand: ""
 
     # Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-    remoteUser: !Var common.container_user_name
+    remoteUser: !Var arguments.common.container_user_name
 
   docker_compose:
     version: "3.7"
     services:
-      !Var common.container_service_name:
+      !Var arguments.common.container_service_name:
         build:
-          context: common.docker_context
-          dockerfile: common.dockerfile
+          context: !Var arguments.common.docker_context
+          dockerfile: !Var arguments.common.dockerfile
         volumes:
           # Forwards the local Docker socket to the container.
           - /var/run/docker.sock:/var/run/docker-host.sock
           # Update this to wherever you want VS Code to mount the folder of your project
           - !Sub
             - "${HostMountPath}:${ContainerWorkingDirectory}:cached"
-            - HostMountPath: !Var common.host_mountpoint_path
-              ContainerWorkingDirectory: !Var common.container_working_directory
+            - HostMountPath: !Var arguments.common.host_mountpoint_path
+              ContainerWorkingDirectory: !Var arguments.common.container_working_directory
           # Avoid reinstalling extensions and share them with named volume.
           - !Sub
             - "${ExtensionVolumeName}:${HomeDirectory}/.vscode-server/extensions"
-            - ExtensionVolumeName: !Var common.extension_volume_name
-              HomeDirectory: !Var auto_define.home_directory
+            - ExtensionVolumeName: !Var arguments.common.extension_volume_name
+              HomeDirectory: !Var let.home_dir
           - !Sub
             - "${InsiderExtensionVolumeName}:${HomeDirectory}/.vscode-server-insiders/extensions"
-            - InsiderExtensionVolumeName: !Var common.insider_extension_volume_name
-              HomeDirectory: !Var auto_define.home_directory
+            - InsiderExtensionVolumeName: !Var arguments.common.insider_extension_volume_name
+              HomeDirectory: !Var let.home_dir
         # Overrides default command so things don't shut down after the process ends.
         entrypoint: /usr/local/share/docker-init.sh
         command: sleep infinity
@@ -100,9 +100,9 @@ configs:
         # security_opt:
         #   - seccomp:unconfined
         # Uncomment the next line to use a non-root user for all processes.
-        user: !Var common.container_user_name
+        user: !Var arguments.common.container_user_name
         # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
         # (Adding the "ports" property to this file will not forward from a Codespace.)
     volumes:
-      !Var common.extension_volume_name:
-      !Var common.insider_extension_volume_name:
+      !Var arguments.common.extension_volume_name:
+      !Var arguments.common.insider_extension_volume_name:
