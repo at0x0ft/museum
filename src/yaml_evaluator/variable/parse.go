@@ -61,16 +61,7 @@ func evaluateLet(let *yaml.Node, variableMap *map[string]string) error {
     ch := make(chan traverse.NodeInfo)
     go traverse.Traverse(let, ch, traverse.PostOrder)
     for nodeInfo := range ch {
-        if err := evaluator.EvaluateVariable(nodeInfo.Node, variableMap); err != nil {
-            return err
-        }
-        if err := evaluator.EvaluateSubstitution(nodeInfo.Node); err != nil {
-            return err
-        }
-        if err := evaluator.EvaluateEquals(nodeInfo.Node); err != nil {
-            return err
-        }
-        if err := evaluator.EvaluateIf(nodeInfo.Node); err != nil {
+        if err := evaluator.EvaluateAll(nodeInfo.Node, variableMap); err != nil {
             return err
         }
     }
