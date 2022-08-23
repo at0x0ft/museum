@@ -69,6 +69,7 @@ configs:
 
   docker_compose:
     version: "3.7"
+
     services:
       !Var arguments.common.container_service_name:
         build:
@@ -103,6 +104,7 @@ configs:
         user: !Var arguments.common.container_user_name
         # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
         # (Adding the "ports" property to this file will not forward from a Codespace.)
+
     volumes:
       !Var arguments.common.extension_volume_name:
       !Var arguments.common.insider_extension_volume_name:

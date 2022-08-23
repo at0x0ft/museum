@@ -9,7 +9,6 @@ import (
     "github.com/at0x0ft/cod2e2/yaml_evaluator/evaluator"
     "github.com/at0x0ft/cod2e2/yaml_evaluator/traverse"
     "github.com/at0x0ft/cod2e2/yaml_evaluator/variable"
-    // "github.com/at0x0ft/cod2e2/yaml_evaluator/debug"
 )
 
 type YamlFormat struct {
@@ -21,15 +20,14 @@ type YamlFormat struct {
     } `yaml:"configs"`
 }
 
-func main() {
-    buf, err := ioutil.ReadFile(os.Args[1])
-    if err != nil {
-        fmt.Println(err)
-        return
-    }
+const (
+    DevContainerFileName string = "devcontainer.yml"
+    DockerComposeFileName string = "docker-compose.yml"
+)
 
-    var data *YamlFormat
-    if err := yaml.Unmarshal(buf, &data); err != nil {
+func main() {
+    data, err := loadYaml(os.Args[1])
+    if err != nil {
         fmt.Println(err)
         return
     }
@@ -44,14 +42,30 @@ func main() {
         return
     }
 
-    var b bytes.Buffer
-    yamlEncoder := yaml.NewEncoder(&b)
-    defer yamlEncoder.Close()
-    yamlEncoder.SetIndent(2)
-    // yamlEncoder.Encode(&data.Configs.VSCodeDevcontainer)
-    yamlEncoder.Encode(&data.Configs.DockerCompose)
+    // TODO: Validate os.Args[2] is the directory path or not.
+    devContainerFilePath := os.Args[2] + "/" + DevContainerFileName
+    if err := writeYaml(devContainerFilePath, &data.Configs.VSCodeDevcontainer); err != nil {
+        fmt.Println(err)
+        return
+    }
+    dockerComposeFilePath := os.Args[2] + "/" + DockerComposeFileName
+    if err := writeYaml(dockerComposeFilePath, &data.Configs.DockerCompose); err != nil {
+        fmt.Println(err)
+        return
+    }
+}
 
-    fmt.Print(string(b.Bytes()))
+func loadYaml(filePath string) (*YamlFormat, error) {
+    buf, err := ioutil.ReadFile(filePath)
+    if err != nil {
+        return nil, err
+    }
+
+    var data *YamlFormat
+    if err := yaml.Unmarshal(buf, &data); err != nil {
+        return nil, err
+    }
+    return data, nil
 }
 
 func evaluateYaml(rootNode *yaml.Node, variables *map[string]string) error {
@@ -61,6 +75,19 @@ func evaluateYaml(rootNode *yaml.Node, variables *map[string]string) error {
         if err := evaluator.EvaluateAll(nodeInfo.Node, variables); err != nil {
             return err
         }
+    }
+    return nil
+}
+
+func writeYaml(filePath string, data *yaml.Node) error {
+    var buf bytes.Buffer
+    yamlEncoder := yaml.NewEncoder(&buf)
+    defer yamlEncoder.Close()
+    yamlEncoder.SetIndent(2)
+
+    yamlEncoder.Encode(data)
+    if err := ioutil.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
+        return err
     }
     return nil
 }
