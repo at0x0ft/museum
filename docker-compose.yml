@@ -30,6 +30,4 @@ services:
       <<: *yaml_evaluator_base_build_config
       target: prod
     working_dir: /workspace
-    volumes:
-      - ./test_project:/workspace
     entrypoint: /yaml_evaluator
