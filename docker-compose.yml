@@ -8,6 +8,18 @@ services:
     working_dir: /workspace
     entrypoint: yq
 
+  yaml_evaluator:
+    build:
+      context: ./src/yaml_evaluator
+      dockerfile: Dockerfile
+      args:
+        - GO_VERSION=1.19
+        - ALPINE_VERSION=3.16
+    working_dir: /workspace
+    volumes:
+      - ./test_project:/workspace
+    entrypoint: /yaml_evaluator
+
   base: &base
     image: golang:1.19
     volumes:
