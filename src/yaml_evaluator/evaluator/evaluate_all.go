@@ -3,6 +3,7 @@ package evaluator
 import "gopkg.in/yaml.v3"
 
 func EvaluateAll(node *yaml.Node, variableMap *map[string]string) error {
+    EvaluateKey(node)
     if err := EvaluateVariable(node, variableMap); err != nil {
         return err
     }
