@@ -16,6 +16,7 @@ variables:
       insider_extension_volume_name: vscode-insider-extensions
   let:
     home_dir: !If [!Equals [!Var arguments.common.container_user_name, "/root"], "/root", !Sub ["/home/${UserName}", {UserName: !Var arguments.common.container_user_name}]]
+    base_shell_service_docker_context: !Sub ["./docker/${ServiceName}", {ServiceName: !Var arguments.common.container_service_name}]
 
 configs:
   vscode_devcontainer:
@@ -73,7 +74,7 @@ configs:
     services:
       !Var arguments.common.container_service_name:
         build:
-          context: !Var arguments.common.docker_context
+          context: !Var let.base_shell_service_docker_context
           dockerfile: !Var arguments.common.dockerfile
         volumes:
           # Forwards the local Docker socket to the container.
