@@ -9,6 +9,7 @@ variables:
       dockerfile: Dockerfile
       host_mountpoint_path: ".."
       container_working_directory: /workspace
+      container_terminal_cwd: ./src
       container_user_name: vscode
       extension_volume_name: vscode-extensions
       insider_extension_volume_name: vscode-insider-extensions
@@ -36,7 +37,10 @@ configs:
     # Set *default* container specific settings.json values on container create.
     settings:
       # common settings
-      terminal.integrated.cwd: ${containerWorkspaceFolder}/src
+      # terminal.integrated.cwd: ${containerWorkspaceFolder}/src
+      # terminal.integrated.cwd: ${containerWorkspaceFolder}/./src
+      terminal.integrated.cwd: !Join ["/", ["${containerWorkspaceFolder}", !Var arguments.base_shell.container_terminal_cwd]]
+        # !Sub ["${containerWorkspaceFolder}/${TerminalCwd}", {TerminalCwd: !Var arguments.base_shell.container_terminal_cwd}]
       git-graph.maxDepthOfRepoSearch: 1
       # language specific settings
       # additional settings
@@ -71,7 +75,8 @@ configs:
     services:
       !Key arguments.base_shell:
         build:
-          context: !Sub [!Var arguments.base_shell.docker_default_context_path_format, {ServiceName: !Key arguments.base_shell}]
+          context:
+            !Sub [!Var arguments.base_shell.docker_default_context_path_format, {ServiceName: !Key arguments.base_shell}]
           dockerfile: !Var arguments.base_shell.dockerfile
         volumes:
           # Forwards the local Docker socket to the container.

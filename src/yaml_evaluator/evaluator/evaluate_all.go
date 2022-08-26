@@ -16,5 +16,8 @@ func EvaluateAll(node *yaml.Node, variableMap *map[string]string) error {
     if err := EvaluateIf(node); err != nil {
         return err
     }
+    if err := EvaluateJoin(node); err != nil {
+        return err
+    }
     return nil
 }
