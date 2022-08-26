@@ -44,15 +44,23 @@ make_devcontainer_directory_if_not_exists() {
   if [ ! -d "${1}" ]; then
     mkdir -p "${1}"
   fi
+
+  local readonly host_mountpoint_path="$(yq '.variables.arguments.base_shell.host_mountpoint_path' "${2}")"
+  local readonly container_terminal_cwd="${1}/${host_mountpoint_path}/$(yq '.variables.arguments.base_shell.container_terminal_cwd' "${2}")"
+  local readonly absolute_container_terminal_cwd="$(readlinkf "${container_terminal_cwd}")"
+  if [ ! -d "${absolute_container_terminal_cwd}" ]; then
+    mkdir -p "${absolute_container_terminal_cwd}"
+  fi
+
   return 0
 }
 
 # If you install 'yq' command in local, comment out yq function below.
-yq() {
-  local readonly DOCKER_YQ_HELPER_SCRIPT_PATH="${SCRIPT_ROOT}/lib/docker_yq.sh"
-  ${DOCKER_YQ_HELPER_SCRIPT_PATH} "${@}"
-  return 0
-}
+# yq() {
+#   local readonly DOCKER_YQ_HELPER_SCRIPT_PATH="${SCRIPT_ROOT}/lib/docker_yq.sh"
+#   ${DOCKER_YQ_HELPER_SCRIPT_PATH} "${@}"
+#   return 0
+# }
 
 evaluate_yaml() {
   local readonly DOCKER_COMPOSE_PATH="${SCRIPT_ROOT}/docker-compose.yml"
@@ -80,8 +88,31 @@ convert_devcontainer_yaml_to_json() {
   return 0
 }
 
-generate() {
-  # TODO: Delete here.
+deploy_docker_config() {
+  local readonly yq_service_docker_context_path=".services.${1}.build.context"
+  local readonly docker_compose_path="${2}/docker-compose.yml"
+  local readonly service_docker_context_relpath="$(yq "${yq_service_docker_context_path}" "${docker_compose_path}")"
+
+  if [ "${service_docker_context_relpath}" != 'null' ]; then
+    local readonly service_docker_srcpath="./services/${1}/docker"
+    local readonly service_docker_dstpath="${2}/${service_docker_context_relpath}"
+    mkdir -p "$(dirname -- "${service_docker_dstpath}")"
+    if [ -d "${service_docker_dstpath}" ]; then
+      rm -rf "${service_docker_dstpath}"
+    fi
+    cp -r "${service_docker_srcpath}" "${service_docker_dstpath}"
+  fi
+
+  return 0
+}
+
+deploy_service_configs() {
+  deploy_docker_config 'base_shell' "${1}"
+  return 0
+}
+
+deploy() {
+  # TODO: Delete here later.
   # START: temporary initial setup
   local readonly PROJECT_PATH="${SCRIPT_ROOT}/test_project"
   local readonly CONFIG_YAML_INPUT_PATH="${SCRIPT_ROOT}/config.yml"
@@ -92,11 +123,13 @@ generate() {
   local readonly DEVCONTAINER_YAML_NAME='devcontainer.yml'
 
   local readonly devcontainer_directory_path="${1}/${DEVCONTAINER_DIRNAME}"
-  make_devcontainer_directory_if_not_exists "${devcontainer_directory_path}"
+  make_devcontainer_directory_if_not_exists "${devcontainer_directory_path}" "${2}"
 
   evaluate_yaml "${2}" "${devcontainer_directory_path}"
   convert_devcontainer_yaml_to_json "${devcontainer_directory_path}/${DEVCONTAINER_YAML_NAME}"
+  # TODO: generate Dockerfiles from config.yml info.
+  deploy_service_configs "${devcontainer_directory_path}"
 
   return 0
 }
-generate
+deploy

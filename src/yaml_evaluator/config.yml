@@ -11,6 +11,8 @@ variables:
       container_working_directory: /workspace
       container_terminal_cwd: ./src
       container_user_name: vscode
+      vscode_server_dirname: .vscode-server
+      vscode_insider_server_dirname: .vscode-insider-server
       extension_volume_name: vscode-extensions
       insider_extension_volume_name: vscode-insider-extensions
   let:
@@ -88,13 +90,15 @@ configs:
               ContainerWorkingDirectory: !Var arguments.base_shell.container_working_directory
           # Avoid reinstalling extensions and share them with named volume.
           - !Sub
-            - "${ExtensionVolumeName}:${HomeDirectory}/.vscode-server/extensions"
+            - "${ExtensionVolumeName}:${HomeDirectory}/${VSCodeServerDirname}/extensions"
             - ExtensionVolumeName: !Var arguments.base_shell.extension_volume_name
               HomeDirectory: !Var let.home_dir
+              VSCodeServerDirname: !Var arguments.base_shell.vscode_server_dirname
           - !Sub
-            - "${InsiderExtensionVolumeName}:${HomeDirectory}/.vscode-server-insiders/extensions"
+            - "${InsiderExtensionVolumeName}:${HomeDirectory}/${VSCodeInsiderServerDirname}/extensions"
             - InsiderExtensionVolumeName: !Var arguments.base_shell.insider_extension_volume_name
               HomeDirectory: !Var let.home_dir
+              VSCodeInsiderServerDirname: !Var arguments.base_shell.vscode_insider_server_dirname
         # Overrides default command so things don't shut down after the process ends.
         entrypoint: /usr/local/share/docker-init.sh
         command: sleep infinity
