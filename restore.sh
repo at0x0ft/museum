@@ -36,26 +36,7 @@ readlinkf() {
   done
   return 1
 }
-SCRIPT_PATH="$(readlinkf "${0}")"
-SCRIPT_ROOT="$(dirname -- "${SCRIPT_PATH}")"
-DEVCONTAINER_DIRNAME='.devcontainer'
 
-make_devcontainer_directory_if_not_exists() {
-  if [ ! -d "${1}" ]; then
-    mkdir -p "${1}"
-  fi
-
-  local readonly host_mountpoint_path="$(yq '.variables.arguments.base_shell.host_mountpoint_path' "${2}")"
-  local readonly container_terminal_cwd="${1}/${host_mountpoint_path}/$(yq '.variables.arguments.base_shell.container_terminal_cwd' "${2}")"
-  local readonly absolute_container_terminal_cwd="$(readlinkf "${container_terminal_cwd}")"
-  if [ ! -d "${absolute_container_terminal_cwd}" ]; then
-    mkdir -p "${absolute_container_terminal_cwd}"
-  fi
-
-  return 0
-}
-SCRIPT_PATH="$(readlinkf "${0}")"
-SCRIPT_ROOT="$(dirname -- "${0}")"
 SKELETON_FILENAME='skeleton.yml'
 SERVICE_CONFIG_TEMPLATE_FILENAME='config.yml'
 
@@ -95,6 +76,10 @@ merge_service_configs() {
 }
 
 restore() {
+  local readonly devcontainer_path="${1}"
+  shift
+  local readonly skeleton_path="${devcontainer_path}/${SKELETON_FILENAME}"
+
   local readonly base_shell_config_path="$(get_base_shell_config_path "${skeleton_path}")"
   set -- "${base_shell_config_path}"
 
@@ -115,4 +100,4 @@ restore() {
 
   return 0
 }
-restore
+restore "${1}"
