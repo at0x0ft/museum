@@ -71,7 +71,6 @@ merge_service_configs() {
   shift
   local readonly evaluate_statement="$(create_yq_evaluate_statement "${@}")"
   yq "${evaluate_statement}" "${base_shell_config_path}"
-  # echo ${evaluate_statement}
   return 0
 }
 
@@ -87,7 +86,7 @@ restore() {
   local readonly services="$(get_services_count "${skeleton_path}")"
   while [ "${service_index}" -lt "${services}" ]; do
     local readonly service_config_path="$(get_service_config_path ".services[${service_index}]" "${skeleton_path}")"
-    set -- "${@}" "${skeleton_path}"
+    set -- "${@}" "${service_config_path}"
     service_index=$((service_index + 1))
   done
 
@@ -95,7 +94,7 @@ restore() {
   if [ "${#}" -eq 1 ]; then
     cp "${base_shell_config_path}" "${mixed_config_output_path}"
   else
-    create_yq_evaluate_statement "${@}" > "${mixed_config_output_path}"
+    merge_service_configs "${@}" > "${mixed_config_output_path}"
   fi
 
   return 0
