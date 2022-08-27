@@ -38,18 +38,11 @@ configs:
 
     # Set *default* container specific settings.json values on container create.
     settings:
-      # common settings
-      # terminal.integrated.cwd: ${containerWorkspaceFolder}/src
-      # terminal.integrated.cwd: ${containerWorkspaceFolder}/./src
       terminal.integrated.cwd: !Join ["/", ["${containerWorkspaceFolder}", !Var arguments.base_shell.container_terminal_cwd]]
-        # !Sub ["${containerWorkspaceFolder}/${TerminalCwd}", {TerminalCwd: !Var arguments.base_shell.container_terminal_cwd}]
       git-graph.maxDepthOfRepoSearch: 1
-      # language specific settings
-      # additional settings
 
     # Add the IDs of extensions you want installed when the container is created.
     extensions:
-      # common extensions
       - ms-azuretools.vscode-docker
       - wmaurer.vscode-jumpy
       - oderwat.indent-rainbow
@@ -59,8 +52,6 @@ configs:
       - eamodio.gitlens
       - mhutchie.git-graph
       - yzhang.markdown-all-in-one
-      # language specific extensions
-      # additional extensions
 
     # Use 'forwardPorts' to make a list of ports inside the container available locally.
     # forwardPorts: []
@@ -68,7 +59,6 @@ configs:
     # Use 'postCreateCommand' to run commands after the container is created.
     # postCreateCommand: ""
 
-    # Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
     remoteUser: !Var arguments.base_shell.container_user_name
 
   docker_compose:
