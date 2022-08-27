@@ -37,3 +37,6 @@ VSCode docker remote development environment collections.
    ```
 3. Check generated `.devconainer/config.yml` out! This is a blue print of `devcontainer.json` & `docker-compose.yml` for VSCode Remote Development for Docker. Fix it at your preference.
 4. Run [`deploy.sh`](./deploy.sh) giving `.devcontainer` directory as argument. This script will generate canonical `.devcontainer/devcontainer.json` & `.devcontainer/docker-composer.yml`!
+   ```sh
+   ./deploy.sh ../test_project/.devcontainer
+   ```
