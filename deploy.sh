@@ -38,7 +38,7 @@ readlinkf() {
 }
 SCRIPT_PATH="$(readlinkf "${0}")"
 SCRIPT_ROOT="$(dirname -- "${SCRIPT_PATH}")"
-DEVCONTAINER_DIRNAME='.devcontainer'
+CONFIG_FILENAME='config.yml'
 
 make_devcontainer_directory_if_not_exists() {
   if [ ! -d "${1}" ]; then
@@ -66,15 +66,13 @@ evaluate_yaml() {
   local readonly DOCKER_COMPOSE_PATH="${SCRIPT_ROOT}/docker-compose.yml"
   local readonly YAML_EVALUATOR_SERVICE_NAME='yaml_evaluator'
   local readonly YAML_EVALUATOR_SERVICE_WORKING_DIRPATH='/workspace'
-  local readonly config_yaml_relpath="./$(basename -- "${1}")"
-  local readonly YAML_OUTPUT_RELPATH='.'
-
-  cp "${1}" "${2}"
+  local readonly CONFIG_YAML_RELPATH="./${CONFIG_FILENAME}"
+  local readonly OUTPUT_DIRECTORY_RELPATH='.'
 
   docker-compose -f "${DOCKER_COMPOSE_PATH}" run --rm \
     --user="$(id -u):$(id -g)" \
-    -v "${2}:${YAML_EVALUATOR_SERVICE_WORKING_DIRPATH}" \
-    "${YAML_EVALUATOR_SERVICE_NAME}" "${config_yaml_relpath}" "${YAML_OUTPUT_RELPATH}"
+    -v "${1}:${YAML_EVALUATOR_SERVICE_WORKING_DIRPATH}" \
+    "${YAML_EVALUATOR_SERVICE_NAME}" "${CONFIG_YAML_RELPATH}" "${OUTPUT_DIRECTORY_RELPATH}"
 
   return 0
 }
@@ -82,9 +80,10 @@ evaluate_yaml() {
 convert_devcontainer_yaml_to_json() {
   local readonly YQ_JSON_INDENTATION_SPACES='4'
   local readonly YQ_EVALUATION_STATEMENT_PATH='.'
-  local readonly DEVCONTAINER_JSON_PATH="$(dirname -- "${1}")/devcontainer.json"
+  local readonly yaml_path="${1}/devcontainer.yml"
+  local readonly json_path="${1}/devcontainer.json"
 
-  yq -o=json -I="${YQ_JSON_INDENTATION_SPACES}" "${YQ_EVALUATION_STATEMENT_PATH}" "${1}" >"${DEVCONTAINER_JSON_PATH}"
+  yq -o=json -I="${YQ_JSON_INDENTATION_SPACES}" "${YQ_EVALUATION_STATEMENT_PATH}" "${yaml_path}" >"${json_path}"
   return 0
 }
 
@@ -114,21 +113,14 @@ deploy_service_configs() {
 deploy() {
   # TODO: Delete here later.
   # START: temporary initial setup
-  local readonly PROJECT_PATH="${SCRIPT_ROOT}/test_project"
-  local readonly CONFIG_YAML_INPUT_PATH="${SCRIPT_ROOT}/config.yml"
+  local readonly DEVCONTAINER_PATH="${SCRIPT_ROOT}/test_project/.devcontainer"
   # Works like argument
-  set -- "${PROJECT_PATH}" "${CONFIG_YAML_INPUT_PATH}"
+  set -- "${DEVCONTAINER_PATH}"
   # END
 
-  local readonly DEVCONTAINER_YAML_NAME='devcontainer.yml'
-
-  local readonly devcontainer_directory_path="${1}/${DEVCONTAINER_DIRNAME}"
-  make_devcontainer_directory_if_not_exists "${devcontainer_directory_path}" "${2}"
-
-  evaluate_yaml "${2}" "${devcontainer_directory_path}"
-  convert_devcontainer_yaml_to_json "${devcontainer_directory_path}/${DEVCONTAINER_YAML_NAME}"
-  # TODO: generate Dockerfiles from config.yml info.
-  deploy_service_configs "${devcontainer_directory_path}"
+  evaluate_yaml "${1}"
+  convert_devcontainer_yaml_to_json "${1}"
+  deploy_service_configs "${1}"
 
   return 0
 }

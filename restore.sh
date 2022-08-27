@@ -75,6 +75,25 @@ get_services_count() {
   return 0
 }
 
+create_yq_evaluate_statement() {
+  local evaluate_statement=". *+ load(\"${1}\")"
+  shift
+  for f in "${@}"; do
+    evaluate_statement="${evaluate_statement} | . *+ load("${f}")"
+  done
+  printf '%s' "${evaluate_statement}"
+  return 0
+}
+
+merge_service_configs() {
+  local base_shell_config_path="${1}"
+  shift
+  local readonly evaluate_statement="$(create_yq_evaluate_statement "${@}")"
+  yq "${evaluate_statement}" "${base_shell_config_path}"
+  # echo ${evaluate_statement}
+  return 0
+}
+
 restore() {
   # TODO: Delete here later.
   # START: temporary initial setup
@@ -96,9 +115,7 @@ restore() {
 
   local readonly base_shell_config_path="$(get_base_shell_config_path "${skeleton_path}")"
   set -- "${base_shell_config_path}"
-  # if [ -f "${base_shell_config_path}" ]; then
-  #   echo "${base_shell_config_path}"
-  # fi
+
   local service_index=0
   local readonly services="$(get_services_count "${skeleton_path}")"
   while [ "${service_index}" -lt "${services}" ]; do
@@ -109,9 +126,9 @@ restore() {
 
   local readonly mixed_config_output_path="${devcontainer_path}/${SERVICE_CONFIG_TEMPLATE_FILENAME}"
   if [ "${#}" -eq 1 ]; then
-    cp "${@}" "${mixed_config_output_path}"
+    cp "${base_shell_config_path}" "${mixed_config_output_path}"
   else
-    yq m "${@}" > "${mixed_config_output_path}"
+    create_yq_evaluate_statement "${@}" > "${mixed_config_output_path}"
   fi
 
   return 0
