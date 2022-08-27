@@ -111,17 +111,9 @@ deploy_service_configs() {
 }
 
 deploy() {
-  # TODO: Delete here later.
-  # START: temporary initial setup
-  local readonly DEVCONTAINER_PATH="${SCRIPT_ROOT}/test_project/.devcontainer"
-  # Works like argument
-  set -- "${DEVCONTAINER_PATH}"
-  # END
-
   evaluate_yaml "${1}"
   convert_devcontainer_yaml_to_json "${1}"
   deploy_service_configs "${1}"
-
   return 0
 }
 deploy

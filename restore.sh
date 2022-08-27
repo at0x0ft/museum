@@ -95,24 +95,6 @@ merge_service_configs() {
 }
 
 restore() {
-  # TODO: Delete here later.
-  # START: temporary initial setup
-  local readonly DEVCONTAINER_PATH="${SCRIPT_ROOT}/test_project/.devcontainer"
-  # Works like argument
-  set -- "${DEVCONTAINER_PATH}"
-  # END
-  local readonly devcontainer_path="${1}"
-  shift
-  local readonly skeleton_path="${devcontainer_path}/${SKELETON_FILENAME}"
-
-  # local readonly devcontainer_directory_path="${1}/${DEVCONTAINER_DIRNAME}"
-  # make_devcontainer_directory_if_not_exists "${devcontainer_directory_path}" "${2}"
-
-  # evaluate_yaml "${2}" "${devcontainer_directory_path}"
-  # convert_devcontainer_yaml_to_json "${devcontainer_directory_path}/${DEVCONTAINER_YAML_NAME}"
-  # # TODO: generate Dockerfiles from config.yml info.
-  # deploy_service_configs "${devcontainer_directory_path}"
-
   local readonly base_shell_config_path="$(get_base_shell_config_path "${skeleton_path}")"
   set -- "${base_shell_config_path}"
 
