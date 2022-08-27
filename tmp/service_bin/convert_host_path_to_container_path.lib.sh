@@ -1,4 +1,4 @@
-# ${1} = path, ${2} = host mountpoint path, ${3} = container mountpoint path
+# ${1} = host path, ${2} = host mountpoint path, ${3} = container mountpoint path
 # Note: you have to give "ABSOLUTE" path for each argument.
 convert_host_path_to_container_path() {
   local readonly host_relpath="${1##${2}}"
