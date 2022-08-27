@@ -3,10 +3,11 @@ set -eu
 
 DOTFILES_URL='https://github.com/at0x0ft/dotfiles.git'
 if [ "${USER_NAME}" =  'root' ]; then
-  DOTFILES_REPOSITORY_DSTPATH='/root/.dotfiles'
+  USER_HOME_DIRECTORY='/root'
 else
-  DOTFILES_REPOSITORY_DSTPATH="/home/${USER_NAME}/.dotfiles"
+  USER_HOME_DIRECTORY="/home/${USER_NAME}"
 fi
+DOTFILES_REPOSITORY_DSTPATH="${USER_HOME_DIRECTORY}/.dotfiles"
 DOTFILES_INSTALL_COMMAND="${DOTFILES_REPOSITORY_DSTPATH}/src/bin/install.sh -econtainer"
 
 apt-get update
@@ -20,9 +21,4 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   autoconf
 chsh -s $(which zsh) "${USER_NAME}"
 
-if [ "${USER_NAME}" =  'root' ]; then
-  git clone "${DOTFILES_URL}" "${DOTFILES_REPOSITORY_DSTPATH}" && "${DOTFILES_INSTALL_COMMAND}"
-else
-  su "${USER_NAME}" -c \
-    # "git clone '${DOTFILES_URL}' ${DOTFILES_REPOSITORY_DSTPATH} && ${DOTFILES_INSTALL_COMMAND}"
-fi
+su "${USER_NAME}" -c "git clone '${DOTFILES_URL}' ${DOTFILES_REPOSITORY_DSTPATH} && ${DOTFILES_INSTALL_COMMAND}"
