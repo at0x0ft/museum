@@ -32,7 +32,11 @@ func main() {
         return
     }
 
-    variables := variable.Parse(&data.Variables)
+    variables, err := variable.Parse(&data.Variables)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
     if err := evaluateYaml(&data.Configs.VSCodeDevcontainer, variables); err != nil {
         fmt.Println(err)
         return
