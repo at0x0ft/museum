@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+  yq:
+    image: mikefarah/yq:4.27.2
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    entrypoint: yq
+
+  yaml_evaluator_base:
+    build: &yaml_evaluator_base_build_config
+      context: ./src/yaml_evaluator
+      dockerfile: Dockerfile
+      args:
+        - GO_VERSION=1.19
+        - ALPINE_VERSION=3.16
+    working_dir: /workspace
+
+  yaml_evaluator_dev:
+    build:
+      <<: *yaml_evaluator_base_build_config
+      target: base
+    working_dir: /workspace
+    volumes:
+      - ./src/yaml_evaluator:/workspace
+
+  yaml_evaluator:
+    build:
+      <<: *yaml_evaluator_base_build_config
+      target: prod
+    working_dir: /workspace
+    entrypoint: /yaml_evaluator
