@@ -32,7 +32,7 @@ func TestPop(t *testing.T) {
     assert.True(t, stk.IsEmpty())
 }
 
-func TestSequential(t *testing.T) {
+func TestSequentialWithStack(t *testing.T) {
     stk := CreateStack[int]()
     fst, snd, trd := 5, 7, 11
     stk.Push(fst)
