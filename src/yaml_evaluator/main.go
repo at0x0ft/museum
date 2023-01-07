@@ -4,10 +4,10 @@ import (
     "fmt"
     "os"
     "io/ioutil"
-    "bytes"
+    // "bytes"
     "gopkg.in/yaml.v3"
-    "github.com/at0x0ft/cod2e2/yaml_evaluator/evaluator"
-    "github.com/at0x0ft/cod2e2/yaml_evaluator/traverse"
+    // "github.com/at0x0ft/cod2e2/yaml_evaluator/evaluator"
+    // "github.com/at0x0ft/cod2e2/yaml_evaluator/traverse"
     "github.com/at0x0ft/cod2e2/yaml_evaluator/variable"
 )
 
@@ -37,26 +37,27 @@ func main() {
         fmt.Println(err)
         return
     }
-    if err := evaluateYaml(&data.Configs.VSCodeDevcontainer, variables); err != nil {
-        fmt.Println(err)
-        return
-    }
-    if err := evaluateYaml(&data.Configs.DockerCompose, variables); err != nil {
-        fmt.Println(err)
-        return
-    }
+    fmt.Printf("variables = %v\n", variables)
+    // if err := evaluateYaml(&data.Configs.VSCodeDevcontainer, variables); err != nil {
+    //     fmt.Println(err)
+    //     return
+    // }
+    // if err := evaluateYaml(&data.Configs.DockerCompose, variables); err != nil {
+    //     fmt.Println(err)
+    //     return
+    // }
 
-    // TODO: Validate os.Args[2] is the directory path or not.
-    devContainerFilePath := os.Args[2] + "/" + DevContainerFileName
-    if err := writeYaml(devContainerFilePath, &data.Configs.VSCodeDevcontainer); err != nil {
-        fmt.Println(err)
-        return
-    }
-    dockerComposeFilePath := os.Args[2] + "/" + DockerComposeFileName
-    if err := writeYaml(dockerComposeFilePath, &data.Configs.DockerCompose); err != nil {
-        fmt.Println(err)
-        return
-    }
+    // // TODO: Validate os.Args[2] is the directory path or not.
+    // devContainerFilePath := os.Args[2] + "/" + DevContainerFileName
+    // if err := writeYaml(devContainerFilePath, &data.Configs.VSCodeDevcontainer); err != nil {
+    //     fmt.Println(err)
+    //     return
+    // }
+    // dockerComposeFilePath := os.Args[2] + "/" + DockerComposeFileName
+    // if err := writeYaml(dockerComposeFilePath, &data.Configs.DockerCompose); err != nil {
+    //     fmt.Println(err)
+    //     return
+    // }
 }
 
 func loadYaml(filePath string) (*YamlFormat, error) {
@@ -72,26 +73,26 @@ func loadYaml(filePath string) (*YamlFormat, error) {
     return data, nil
 }
 
-func evaluateYaml(rootNode *yaml.Node, variables *map[string]string) error {
-    ch := make(chan traverse.NodeInfo)
-    go traverse.Traverse(rootNode, ch, traverse.PostOrder)
-    for nodeInfo := range ch {
-        if err := evaluator.EvaluateAll(nodeInfo.Node, variables); err != nil {
-            return err
-        }
-    }
-    return nil
-}
+// func evaluateYaml(rootNode *yaml.Node, variables *map[string]string) error {
+//     ch := make(chan traverse.NodeInfo)
+//     go traverse.Traverse(rootNode, ch, traverse.PostOrder)
+//     for nodeInfo := range ch {
+//         if err := evaluator.EvaluateAll(nodeInfo.Node, variables); err != nil {
+//             return err
+//         }
+//     }
+//     return nil
+// }
 
-func writeYaml(filePath string, data *yaml.Node) error {
-    var buf bytes.Buffer
-    yamlEncoder := yaml.NewEncoder(&buf)
-    defer yamlEncoder.Close()
-    yamlEncoder.SetIndent(2)
+// func writeYaml(filePath string, data *yaml.Node) error {
+//     var buf bytes.Buffer
+//     yamlEncoder := yaml.NewEncoder(&buf)
+//     defer yamlEncoder.Close()
+//     yamlEncoder.SetIndent(2)
 
-    yamlEncoder.Encode(data)
-    if err := ioutil.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
-        return err
-    }
-    return nil
-}
+//     yamlEncoder.Encode(data)
+//     if err := ioutil.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
+//         return err
+//     }
+//     return nil
+// }
