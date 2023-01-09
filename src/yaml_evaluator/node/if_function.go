@@ -1,4 +1,4 @@
-package variable
+package node
 
 import (
     "fmt"
@@ -9,17 +9,17 @@ import (
 const IfNodeTag = "!If"
 
 type ifPredicateNode struct {
-    path string
+    Path string
     rawNode *yaml.Node
 }
 
 type ifTrueExpressionNode struct {
-    path string
+    Path string
     rawNode *yaml.Node
 }
 
 type ifFalseExpressionNode struct {
-    path string
+    Path string
     rawNode *yaml.Node
 }
 
@@ -31,7 +31,7 @@ type IfNode struct {
 }
 
 func isIf(node *yaml.Node) bool {
-    isIfTaggedSequence := isSequence(node) && node.Tag == IfNodeTag
+    isIfTaggedSequence := IsSequence(node) && node.Tag == IfNodeTag
     hasThreeChildNodes := len(node.Content) == 3
     if !(isIfTaggedSequence && hasThreeChildNodes) {
         return false
@@ -40,7 +40,7 @@ func isIf(node *yaml.Node) bool {
     predicateNode := node.Content[0]
     trueExpressionNode := node.Content[1]
     falseExpressionNode := node.Content[2]
-    return isTerminal(predicateNode) && isTerminal(trueExpressionNode) && isTerminal(falseExpressionNode)
+    return IsTerminal(predicateNode) && IsTerminal(trueExpressionNode) && IsTerminal(falseExpressionNode)
 }
 
 func createIf(path string, node *yaml.Node) *IfNode {
@@ -48,26 +48,26 @@ func createIf(path string, node *yaml.Node) *IfNode {
 
     predicateIndex := 0
     predicateNode := ifPredicateNode{
-        path: path + fmt.Sprintf(childPathSuffixFormat, predicateIndex),
+        Path: path + fmt.Sprintf(childPathSuffixFormat, predicateIndex),
         rawNode: node.Content[predicateIndex],
     }
 
     trueExpressionIndex := 1
     trueExpressionNode := ifTrueExpressionNode{
-        path: path + fmt.Sprintf(childPathSuffixFormat, trueExpressionIndex),
+        Path: path + fmt.Sprintf(childPathSuffixFormat, trueExpressionIndex),
         rawNode: node.Content[trueExpressionIndex],
     }
 
     falseExpressionIndex := 2
     falseExpressionNode := ifFalseExpressionNode{
-        path: path + fmt.Sprintf(childPathSuffixFormat, falseExpressionIndex),
+        Path: path + fmt.Sprintf(childPathSuffixFormat, falseExpressionIndex),
         rawNode: node.Content[falseExpressionIndex],
     }
     return &IfNode{path, predicateNode, trueExpressionNode, falseExpressionNode}
 }
 
 func (self *IfNode) Evaluate(variables map[string]string) (string, error) {
-    predicateNode, err := TerminalFactory(self.predicate.path, self.predicate.rawNode)
+    predicateNode, err := TerminalFactory(self.predicate.Path, self.predicate.rawNode)
     if err != nil {
         return "", err
     }
@@ -77,7 +77,7 @@ func (self *IfNode) Evaluate(variables map[string]string) (string, error) {
     }
 
     if predicate == strconv.FormatBool(true) {
-        trueExpressionNode, err := TerminalFactory(self.trueExpression.path, self.trueExpression.rawNode)
+        trueExpressionNode, err := TerminalFactory(self.trueExpression.Path, self.trueExpression.rawNode)
         if err != nil {
             return "", err
         }
@@ -88,7 +88,7 @@ func (self *IfNode) Evaluate(variables map[string]string) (string, error) {
         return trueExpression, nil
     }
 
-    falseExpressionNode, err := TerminalFactory(self.falseExpression.path, self.falseExpression.rawNode)
+    falseExpressionNode, err := TerminalFactory(self.falseExpression.Path, self.falseExpression.rawNode)
     if err != nil {
         return "", err
     }

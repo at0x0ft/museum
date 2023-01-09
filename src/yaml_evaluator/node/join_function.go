@@ -1,4 +1,4 @@
-package variable
+package node
 
 import (
     // "strings"
@@ -9,23 +9,23 @@ import (
 const JoinNodeTag = "!Join"
 
 type joinDelimiterNode struct {
-    path string
+    Path string
     rawNode *yaml.Node
 }
 
 type joinValueNode struct {
-    path string
+    Path string
     rawNode *yaml.Node
 }
 
 type JoinNode struct {
-    path string
+    Path string
     delimiter joinDelimiterNode
     values []joinValueNode
 }
 
 func isJoin(node *yaml.Node) bool {
-    isJoinTaggedSequence := isSequence(node) && node.Tag == JoinNodeTag
+    isJoinTaggedSequence := IsSequence(node) && node.Tag == JoinNodeTag
     hasTwoChildNodes := len(node.Content) == 2
     if !(isJoinTaggedSequence && !hasTwoChildNodes) {
         return false
@@ -33,7 +33,7 @@ func isJoin(node *yaml.Node) bool {
 
     delimiterNode := node.Content[0]
     valuesNode := node.Content[1]
-    return isTerminal(delimiterNode) && isSequence(valuesNode) && sequenceHasTerminals(valuesNode)
+    return IsTerminal(delimiterNode) && IsSequence(valuesNode) && sequenceHasTerminals(valuesNode)
 }
 
 func createJoin(path string, node *yaml.Node) *JoinNode {
@@ -41,7 +41,7 @@ func createJoin(path string, node *yaml.Node) *JoinNode {
 
     delimiterIndex := 0
     delimiter := joinDelimiterNode{
-        path: path + fmt.Sprintf(childPathSuffixFormat, delimiterIndex),
+        Path: path + fmt.Sprintf(childPathSuffixFormat, delimiterIndex),
         rawNode: node.Content[delimiterIndex],
     }
 
@@ -53,7 +53,7 @@ func createJoin(path string, node *yaml.Node) *JoinNode {
         values = append(
             values,
             joinValueNode{
-                path: valuesParentPath + fmt.Sprintf(childPathSuffixFormat, index),
+                Path: valuesParentPath + fmt.Sprintf(childPathSuffixFormat, index),
                 rawNode: childNode,
             },
         )
@@ -62,7 +62,7 @@ func createJoin(path string, node *yaml.Node) *JoinNode {
 }
 
 func (self *JoinNode) Evaluate(variables map[string]string) (string, error) {
-    delimiterNode, err := TerminalFactory(self.delimiter.path, self.delimiter.rawNode)
+    delimiterNode, err := TerminalFactory(self.delimiter.Path, self.delimiter.rawNode)
     if err != nil {
         return "", err
     }
@@ -73,7 +73,7 @@ func (self *JoinNode) Evaluate(variables map[string]string) (string, error) {
 
     joinedResult := ""
     for _, value := range self.values {
-        valueNode, err := TerminalFactory(value.path, value.rawNode)
+        valueNode, err := TerminalFactory(value.Path, value.rawNode)
         if err != nil {
             return "", err
         }

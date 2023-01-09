@@ -37,7 +37,8 @@ func main() {
         fmt.Println(err)
         return
     }
-    fmt.Printf("variables = %v\n", variables)
+    fmt.Printf("variables = %v\n", variables)   // 4debug
+
     // if err := evaluateYaml(&data.Configs.VSCodeDevcontainer, variables); err != nil {
     //     fmt.Println(err)
     //     return

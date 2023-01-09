@@ -1,4 +1,4 @@
-package variable
+package node
 
 import (
     "fmt"
@@ -9,24 +9,24 @@ import (
 const SubstitutionNodeTag = "!Sub"
 
 type substitutionTemplateExpressionNode struct {
-    path string
+    Path string
     rawNode *yaml.Node
 }
 
 type substitutionVariableMappingNode struct {
-    path string
+    Path string
     rawKeyNode *yaml.Node
     rawValueNode *yaml.Node
 }
 
 type SubstitutionNode struct {
-    path string
+    Path string
     templateExpression substitutionTemplateExpressionNode
     variableMappings []substitutionVariableMappingNode
 }
 
 func isSubstitution(node *yaml.Node) bool {
-    isSubTaggedSequence := isSequence(node) && node.Tag == SubstitutionNodeTag
+    isSubTaggedSequence := IsSequence(node) && node.Tag == SubstitutionNodeTag
     hasTwoChildNodes := len(node.Content) == 2
     if !(isSubTaggedSequence && hasTwoChildNodes) {
         return false
@@ -34,7 +34,7 @@ func isSubstitution(node *yaml.Node) bool {
 
     templateExpressionNode := node.Content[0]
     variableMappingNode := node.Content[1]
-    return isTerminal(templateExpressionNode) && isMapping(variableMappingNode) &&
+    return IsTerminal(templateExpressionNode) && IsMapping(variableMappingNode) &&
         mappingHasTerminals(variableMappingNode)
 }
 
@@ -43,7 +43,7 @@ func createSubstitution(path string, node *yaml.Node) *SubstitutionNode {
 
     templateExpressionIndex := 0
     templateExpression := substitutionTemplateExpressionNode{
-        path: path + fmt.Sprintf(childPathSuffixFormat, templateExpressionIndex),
+        Path: path + fmt.Sprintf(childPathSuffixFormat, templateExpressionIndex),
         rawNode: node.Content[templateExpressionIndex],
     }
 
@@ -55,7 +55,7 @@ func createSubstitution(path string, node *yaml.Node) *SubstitutionNode {
         variableMappings = append(
             variableMappings,
             substitutionVariableMappingNode{
-                path: variableMappingParentPath,
+                Path: variableMappingParentPath,
                 rawKeyNode: variableMappingRawNode.Content[index],
                 rawValueNode: variableMappingRawNode.Content[index + 1],
             },
@@ -67,7 +67,7 @@ func createSubstitution(path string, node *yaml.Node) *SubstitutionNode {
 func (self *SubstitutionNode) Evaluate(variables map[string]string) (string, error) {
     varMap := make(map[string]string)
     for _, variableMapping := range self.variableMappings {
-        variableKeyNode, err := TerminalFactory(variableMapping.path, variableMapping.rawKeyNode)
+        variableKeyNode, err := TerminalFactory(variableMapping.Path, variableMapping.rawKeyNode)
         if err != nil {
             return "", err
         }
@@ -76,7 +76,7 @@ func (self *SubstitutionNode) Evaluate(variables map[string]string) (string, err
             return "", err
         }
 
-        variableValueNode, err := TerminalFactory(variableMapping.path, variableMapping.rawValueNode)
+        variableValueNode, err := TerminalFactory(variableMapping.Path, variableMapping.rawValueNode)
         if err != nil {
             return "", err
         }
@@ -88,7 +88,7 @@ func (self *SubstitutionNode) Evaluate(variables map[string]string) (string, err
         // fmt.Printf("variableMapping[%v] = %v\n", variableKey, variableValue)    // 4debug
     }
 
-    templateExpressionNode, err := TerminalFactory(self.templateExpression.path, self.templateExpression.rawNode)
+    templateExpressionNode, err := TerminalFactory(self.templateExpression.Path, self.templateExpression.rawNode)
     if err != nil {
         return "", err
     }

@@ -1,4 +1,4 @@
-package variable
+package node
 
 import (
     "strconv"
@@ -9,18 +9,18 @@ import (
 const EqualsNodeTag = "!Equals"
 
 type equalsVariableNode struct {
-    path string
+    Path string
     yaml.Node
 }
 
 type EqualsNode struct {
-    path string
+    Path string
     leftVariable equalsVariableNode
     rightVariable equalsVariableNode
 }
 
 func isEquals(node *yaml.Node) bool {
-    isEqualsTaggedSequence := isSequence(node) && node.Tag == EqualsNodeTag
+    isEqualsTaggedSequence := IsSequence(node) && node.Tag == EqualsNodeTag
     hasTwoChildNodes := len(node.Content) == 2
     if !(isEqualsTaggedSequence && hasTwoChildNodes) {
         return false
@@ -28,7 +28,7 @@ func isEquals(node *yaml.Node) bool {
 
     leftVariableNode := node.Content[0]
     rightVariableNode := node.Content[1]
-    return isTerminal(leftVariableNode) && isTerminal(rightVariableNode)
+    return IsTerminal(leftVariableNode) && IsTerminal(rightVariableNode)
 }
 
 func createEquals(parentPath string, node *yaml.Node) *EqualsNode {
@@ -45,11 +45,11 @@ func createEquals(parentPath string, node *yaml.Node) *EqualsNode {
         parentPath + fmt.Sprintf(childPathSuffixFormat, rightVariableIndex),
         *node.Content[rightVariableIndex],
     }
-    return &EqualsNode{path: parentPath, leftVariable: leftVariable, rightVariable: rightVariable}
+    return &EqualsNode{Path: parentPath, leftVariable: leftVariable, rightVariable: rightVariable}
 }
 
 func (self *EqualsNode) Evaluate(variables map[string]string) (string, error) {
-    leftVariableNode, err := TerminalFactory(self.leftVariable.path, &self.leftVariable.Node)
+    leftVariableNode, err := TerminalFactory(self.leftVariable.Path, &self.leftVariable.Node)
     if err != nil {
         return "", err
     }
@@ -58,7 +58,7 @@ func (self *EqualsNode) Evaluate(variables map[string]string) (string, error) {
         return "", err
     }
 
-    rightVariableNode, err := TerminalFactory(self.rightVariable.path, &self.rightVariable.Node)
+    rightVariableNode, err := TerminalFactory(self.rightVariable.Path, &self.rightVariable.Node)
     if err != nil {
         return "", err
     }

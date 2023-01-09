@@ -1,4 +1,4 @@
-package variable
+package node
 
 import (
     "strings"
@@ -9,12 +9,12 @@ import (
 const KeyNodeTag = "!Key"
 
 type KeyNode struct {
-    path string
+    Path string
     yaml.Node
 }
 
 func isKey(node *yaml.Node) bool {
-    return isScalar(node) && node.Style == yaml.TaggedStyle && node.Tag == KeyNodeTag
+    return IsScalar(node) && node.Style == yaml.TaggedStyle && node.Tag == KeyNodeTag
 }
 
 func createKey(path string, node *yaml.Node) *KeyNode {

@@ -1,4 +1,4 @@
-package variable
+package node
 
 import (
     "fmt"
@@ -8,7 +8,7 @@ import (
 const VariableNodeTag = "!Var"
 
 type VariableNode struct {
-    path string
+    Path string
     yaml.Node
 }
 
