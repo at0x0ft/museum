@@ -10,13 +10,15 @@ import (
     "github.com/at0x0ft/cod2e2/yaml_evaluator/variable"
 )
 
+type Configs struct {
+    VSCodeDevcontainer yaml.Node `yaml:"vscode_devcontainer"`
+    DockerCompose yaml.Node `yaml:"docker_compose"`
+}
+
 type YamlFormat struct {
     Version string `yaml:"version"`
     Variables yaml.Node `yaml:"variables"`
-    Configs struct {
-        VSCodeDevcontainer yaml.Node `yaml:"vscode_devcontainer"`
-        DockerCompose yaml.Node `yaml:"docker_compose"`
-    } `yaml:"configs"`
+    Configs Configs `yaml:"configs"`
 }
 
 const (
@@ -36,21 +38,12 @@ func main() {
         fmt.Println(err)
         return
     }
-    fmt.Printf("variables = %v\n", variables)   // 4debug
 
-    evaluatedDevcontainer, err := evaluator.Evaluate(&data.Configs.VSCodeDevcontainer, variables)
+    evaluatedDevcontainer, evaluatedDockerCompose, err := evaluateConfigs(&data.Configs, variables)
     if err != nil {
         fmt.Println(err)
         return
     }
-    // fmt.Println(evaluatedDevcontainer)  // 4debug
-
-    evaluatedDockerCompose, err := evaluator.Evaluate(&data.Configs.DockerCompose, variables)
-    if err != nil {
-        fmt.Println(err)
-        return
-    }
-    // fmt.Println(evaluatedDockerCompose)  // 4debug
 
     // TODO: Validate os.Args[2] is the directory path or not.
     devContainerFilePath := os.Args[2] + "/" + DevContainerFileName
@@ -76,6 +69,21 @@ func loadYaml(filePath string) (*YamlFormat, error) {
         return nil, err
     }
     return data, nil
+}
+
+func evaluateConfigs(configs *Configs, variables map[string]string) (*yaml.Node, *yaml.Node, error) {
+    evaluatedDevcontainer, err := evaluator.Evaluate(&configs.VSCodeDevcontainer, variables)
+    if err != nil {
+        fmt.Println(err)
+        return nil, nil, err
+    }
+
+    evaluatedDockerCompose, err := evaluator.Evaluate(&configs.DockerCompose, variables)
+    if err != nil {
+        fmt.Println(err)
+        return nil, nil, err
+    }
+    return evaluatedDevcontainer, evaluatedDockerCompose, nil
 }
 
 func writeYaml(filePath string, data *yaml.Node) error {
