@@ -27,7 +27,9 @@ func (self *scalarNode) createNew(value string) *yaml.Node {
     newNode := self.Node
     var newContent []*yaml.Node
     newNode.Style = 0
-    newNode.Tag = "!!str"
+    if self.Node.Style != 0 {
+        newNode.Tag = "!!str"
+    }
     newNode.Value = value
     newNode.Content = newContent
     return &newNode
