@@ -7,17 +7,18 @@ import (
     "bytes"
     "gopkg.in/yaml.v3"
     "github.com/at0x0ft/cod2e2/yaml_evaluator/evaluator"
-    "github.com/at0x0ft/cod2e2/yaml_evaluator/traverse"
     "github.com/at0x0ft/cod2e2/yaml_evaluator/variable"
 )
+
+type Configs struct {
+    VSCodeDevcontainer yaml.Node `yaml:"vscode_devcontainer"`
+    DockerCompose yaml.Node `yaml:"docker_compose"`
+}
 
 type YamlFormat struct {
     Version string `yaml:"version"`
     Variables yaml.Node `yaml:"variables"`
-    Configs struct {
-        VSCodeDevcontainer yaml.Node `yaml:"vscode_devcontainer"`
-        DockerCompose yaml.Node `yaml:"docker_compose"`
-    } `yaml:"configs"`
+    Configs Configs `yaml:"configs"`
 }
 
 const (
@@ -37,23 +38,21 @@ func main() {
         fmt.Println(err)
         return
     }
-    if err := evaluateYaml(&data.Configs.VSCodeDevcontainer, variables); err != nil {
-        fmt.Println(err)
-        return
-    }
-    if err := evaluateYaml(&data.Configs.DockerCompose, variables); err != nil {
+
+    evaluatedDevcontainer, evaluatedDockerCompose, err := evaluateConfigs(&data.Configs, variables)
+    if err != nil {
         fmt.Println(err)
         return
     }
 
     // TODO: Validate os.Args[2] is the directory path or not.
     devContainerFilePath := os.Args[2] + "/" + DevContainerFileName
-    if err := writeYaml(devContainerFilePath, &data.Configs.VSCodeDevcontainer); err != nil {
+    if err := writeYaml(devContainerFilePath, evaluatedDevcontainer); err != nil {
         fmt.Println(err)
         return
     }
     dockerComposeFilePath := os.Args[2] + "/" + DockerComposeFileName
-    if err := writeYaml(dockerComposeFilePath, &data.Configs.DockerCompose); err != nil {
+    if err := writeYaml(dockerComposeFilePath, evaluatedDockerCompose); err != nil {
         fmt.Println(err)
         return
     }
@@ -72,15 +71,19 @@ func loadYaml(filePath string) (*YamlFormat, error) {
     return data, nil
 }
 
-func evaluateYaml(rootNode *yaml.Node, variables *map[string]string) error {
-    ch := make(chan traverse.NodeInfo)
-    go traverse.Traverse(rootNode, ch, traverse.PostOrder)
-    for nodeInfo := range ch {
-        if err := evaluator.EvaluateAll(nodeInfo.Node, variables); err != nil {
-            return err
-        }
+func evaluateConfigs(configs *Configs, variables map[string]string) (*yaml.Node, *yaml.Node, error) {
+    evaluatedDevcontainer, err := evaluator.Evaluate(&configs.VSCodeDevcontainer, variables)
+    if err != nil {
+        fmt.Println(err)
+        return nil, nil, err
     }
-    return nil
+
+    evaluatedDockerCompose, err := evaluator.Evaluate(&configs.DockerCompose, variables)
+    if err != nil {
+        fmt.Println(err)
+        return nil, nil, err
+    }
+    return evaluatedDevcontainer, evaluatedDockerCompose, nil
 }
 
 func writeYaml(filePath string, data *yaml.Node) error {

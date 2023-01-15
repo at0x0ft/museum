@@ -1,9 +1,8 @@
-package variable
+package evaluator
 
 import "gopkg.in/yaml.v3"
 
-func Parse(root *yaml.Node) (map[string]string, error) {
-    variables := make(map[string]string)
+func Evaluate(root *yaml.Node, variables map[string]string) (*yaml.Node, error) {
     r, err := visitableFactory("", root)
     if err != nil {
         return nil, err
