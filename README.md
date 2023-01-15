@@ -2,7 +2,6 @@
 
 VSCode docker remote development environment template collections.
 
-
 ## Note
 
 **This project has been under development yet**. The specifications would be **changed disruptively** in the future.
