@@ -5,11 +5,11 @@ import (
     "github.com/at0x0ft/cod2e2/yaml_evaluator/node"
 )
 
-type ScalarNode struct {
+type scalarNode struct {
     node.ScalarNode
 }
 
-func (self *ScalarNode) Visit(variables map[string]string) (map[string]string, error) {
+func (self *scalarNode) visit(variables map[string]string) (map[string]string, error) {
     // fmt.Printf("scalar\n")  // 4debug
     t, err := node.TerminalFactory(self.Path, &self.Node)
     if err != nil {

@@ -5,27 +5,27 @@ import (
     "github.com/at0x0ft/cod2e2/yaml_evaluator/node"
 )
 
-type MappingNode struct {
+type mappingNode struct {
     node.MappingNode
 }
 
-type MappingElement struct {
+type mappingElement struct {
     node.MappingElement
 }
 
-func (self *MappingNode) Visit(variables map[string]string) (map[string]string, error) {
+func (self *mappingNode) visit(variables map[string]string) (map[string]string, error) {
     return self.visitChildren(variables)
 }
 
-func (self *MappingNode) visitChildren(variables map[string]string) (map[string]string, error) {
+func (self *mappingNode) visitChildren(variables map[string]string) (map[string]string, error) {
     var err error
     for index := 0; index < len(self.Content); index += 2 {
-        element := &MappingElement{*node.CreateMappingElement(self.Path, self.Content[index], self.Content[index + 1])}
-        variables, err = element.VisitKey(variables)
+        element := &mappingElement{*node.CreateMappingElement(self.Path, self.Content[index], self.Content[index + 1])}
+        variables, err = element.visitKey(variables)
         if err != nil {
             return nil, err
         }
-        variables, err = element.VisitValue(variables)
+        variables, err = element.visitValue(variables)
         if err != nil {
             return nil, err
         }
@@ -33,18 +33,18 @@ func (self *MappingNode) visitChildren(variables map[string]string) (map[string]
     return variables, nil
 }
 
-func (self *MappingElement) VisitKey(variables map[string]string) (map[string]string, error) {
-    node, err := VisitableFactory(self.Path, self.KeyNode)
+func (self *mappingElement) visitKey(variables map[string]string) (map[string]string, error) {
+    node, err := visitableFactory(self.Path, self.KeyNode)
     if err != nil {
         return nil, err
     }
-    return node.Visit(variables)
+    return node.visit(variables)
 }
 
-func (self *MappingElement) VisitValue(variables map[string]string) (map[string]string, error) {
-    node, err := VisitableFactory(self.Path, self.ValueNode)
+func (self *mappingElement) visitValue(variables map[string]string) (map[string]string, error) {
+    node, err := visitableFactory(self.Path, self.ValueNode)
     if err != nil {
         return nil, err
     }
-    return node.Visit(variables)
+    return node.visit(variables)
 }
