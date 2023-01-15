@@ -9,8 +9,8 @@ type MappingNode struct {
     node.MappingNode
 }
 
-type MappingKeyNode struct {
-    node.MappingKeyNode
+type MappingElement struct {
+    node.MappingElement
 }
 
 func (self *MappingNode) Visit(variables map[string]string) (map[string]string, error) {
@@ -18,23 +18,33 @@ func (self *MappingNode) Visit(variables map[string]string) (map[string]string, 
 }
 
 func (self *MappingNode) visitChildren(variables map[string]string) (map[string]string, error) {
+    var err error
     for index := 0; index < len(self.Content); index += 2 {
-        childKeyContent := self.Content[index]
-        childValueContent := self.Content[index + 1]
-        newVariables, err := (&MappingKeyNode{*node.CreateMappingKey(self.Path, childKeyContent, childValueContent)}).Visit(variables)
+        element := &MappingElement{*node.CreateMappingElement(self.Path, self.Content[index], self.Content[index + 1])}
+        variables, err = element.VisitKey(variables)
         if err != nil {
             return nil, err
         }
-        variables = newVariables
+        variables, err = element.VisitValue(variables)
+        if err != nil {
+            return nil, err
+        }
     }
     return variables, nil
 }
 
-func (self *MappingKeyNode) Visit(variables map[string]string) (map[string]string, error) {
-    // fmt.Printf("mapping.key\n") // 4debug
-    childNode, err := VisitableFactory(self.Path, self.ValueNode)
+func (self *MappingElement) VisitKey(variables map[string]string) (map[string]string, error) {
+    node, err := VisitableFactory(self.Path, self.KeyNode)
     if err != nil {
         return nil, err
     }
-    return childNode.Visit(variables)
+    return node.Visit(variables)
+}
+
+func (self *MappingElement) VisitValue(variables map[string]string) (map[string]string, error) {
+    node, err := VisitableFactory(self.Path, self.ValueNode)
+    if err != nil {
+        return nil, err
+    }
+    return node.Visit(variables)
 }

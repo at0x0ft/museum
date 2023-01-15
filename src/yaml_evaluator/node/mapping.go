@@ -10,9 +10,9 @@ type MappingNode struct {
     yaml.Node
 }
 
-type MappingKeyNode struct {
+type MappingElement struct {
     Path string
-    yaml.Node
+    KeyNode *yaml.Node
     ValueNode *yaml.Node
 }
 
@@ -24,7 +24,8 @@ func CreateMapping(parentPath string, node *yaml.Node) *MappingNode {
     return &MappingNode{parentPath, *node}
 }
 
-func CreateMappingKey(parentPath string, node *yaml.Node, valueNode *yaml.Node) *MappingKeyNode {
-    path := parentPath + "." + node.Value
-    return &MappingKeyNode{path, *node, valueNode}
+func CreateMappingElement(parentPath string, keyNode *yaml.Node, valueNode *yaml.Node) *MappingElement {
+    path := parentPath + "." + keyNode.Value
+    // fmt.Printf("path = %v\n", path)   // 4debug
+    return &MappingElement{Path: path, KeyNode: keyNode, ValueNode: valueNode}
 }
