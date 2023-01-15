@@ -1,6 +1,6 @@
 package node
 
-import "fmt"   // 4debug
+// import "fmt"   // 4debug
 import (
     "strings"
     "gopkg.in/yaml.v3"
@@ -24,6 +24,6 @@ func createKey(path string, node *yaml.Node) *KeyNode {
 func (self *KeyNode) Evaluate(variables map[string]string) (string, error) {
     path := self.Value
     splitPath := strings.Split(path, ".")
-    fmt.Printf("debug = %v\n", splitPath[len(splitPath) - 1])   // 4debug
+    // fmt.Printf("debug = %v\n", splitPath[len(splitPath) - 1])   // 4debug
     return splitPath[len(splitPath) - 1], nil
 }
