@@ -51,7 +51,6 @@ func (self *sequenceNode) visitChildren(variables map[string]string) ([]*yaml.No
 func (self *sequenceNode) createNew(newContent[]*yaml.Node) *yaml.Node {
     newNode := self.Node
     newNode.Content = newContent
-    // fmt.Printf("address equality: %v\n", &self.Node == &newNode)  // 4debug
     return &newNode
 }
 

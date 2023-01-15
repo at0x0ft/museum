@@ -45,7 +45,7 @@ func main() {
     }
     // fmt.Println(evaluatedDevcontainer)  // 4debug
 
-    evaluatedDockerCompose, err := evaluator.Evaluate(&data.Configs.VSCodeDevcontainer, variables)
+    evaluatedDockerCompose, err := evaluator.Evaluate(&data.Configs.DockerCompose, variables)
     if err != nil {
         fmt.Println(err)
         return
