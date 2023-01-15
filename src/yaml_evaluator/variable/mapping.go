@@ -2,7 +2,7 @@ package variable
 
 import (
     // "fmt"   // 4debug
-    "github.com/at0x0ft/cod2e2/yaml_evaluator/node"
+    "github.com/at0x0ft/museum/yaml_evaluator/node"
 )
 
 type mappingNode struct {
