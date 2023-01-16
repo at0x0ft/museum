@@ -4,51 +4,73 @@ version: "0"
 variables:
   arguments:
     base_shell:
-      devcontainer_name: Test project.
-      docker_default_context_path_format: "./docker/${ServiceName}"
-      dockerfile: Dockerfile
-      host_mountpoint_path: ".."
-      container_working_directory: /workspace
-      container_terminal_cwd: ./src
-      container_user_name: vscode
-      vscode_server_dirname: .vscode-server
-      vscode_insider_server_dirname: .vscode-insider-server
-      extension_volume_name: vscode-extensions
-      insider_extension_volume_name: vscode-insider-extensions
+      common:
+        user_name: vscode
+      devcontainer:
+        name: Test project.
+        working_directory: /workspace
+        container_terminal_cwd: ./src
+      docker_compose:
+        build:
+          dockerfile: Dockerfile
+        host_mountpoint_path: ".."
+        volume_name:
+          vscode_extension: vscode-extensions
+          vscode_insider_extension: vscode-insider-extensions
   let:
     base_shell:
-      home_dir:
-        !If
-        - !Equals
-          - !Var arguments.base_shell.container_user_name
-          - "root"
-        - "/root"
-        - !Sub
-          - "/home/${UserName}"
-          - UserName: !Var arguments.base_shell.container_user_name
-      docker_compose_vscode_extension_mount_setting:
-        !Sub
-        - "${ExtensionVolumeName}:${HomeDirectory}/${VSCodeServerDirname}/extensions"
-        - ExtensionVolumeName: !Var arguments.base_shell.extension_volume_name
-          HomeDirectory: !Var let.base_shell.home_dir
-          VSCodeServerDirname: !Var arguments.base_shell.vscode_server_dirname
-      docker_compose_vscode_insider_extension_mount_setting:
-        !Sub
-        - "${InsiderExtensionVolumeName}:${HomeDirectory}/${VSCodeInsiderServerDirname}/extensions"
-        - InsiderExtensionVolumeName: !Var arguments.base_shell.insider_extension_volume_name
-          HomeDirectory: !Var let.base_shell.home_dir
-          VSCodeInsiderServerDirname: !Var arguments.base_shell.vscode_insider_server_dirname
+      common:
+        service_name: !Key arguments.base_shell
+        home_dir:
+          !If
+          - !Equals
+            - !Var arguments.base_shell.common.user_name
+            - "root"
+          - "/root"
+          - !Sub
+            - "/home/${UserName}"
+            - UserName: !Var arguments.base_shell.common.user_name
+      devcontainer:
+        terminal_absolute_cwd:
+          !Join
+          - "/"
+          -
+            - "${containerWorkspaceFolder}"
+            - !Var arguments.base_shell.devcontainer.container_terminal_cwd
+      docker_compose:
+        build:
+          context:
+            !Sub
+            - "./docker/${ServiceName}"
+            - ServiceName: !Var let.base_shell.common.service_name
+          dockerfile:
+        mount_setting:
+          container_working_directory:
+            !Sub
+            - "${HostMountPath}:${ContainerWorkingDirectory}:cached"
+            - HostMountPath: !Var arguments.base_shell.docker_compose.host_mountpoint_path
+              ContainerWorkingDirectory: !Var arguments.base_shell.devcontainer.working_directory
+          vscode_extension:
+            !Sub
+            - "${ExtensionVolumeName}:${HomeDirectory}/.vscode-server/extensions"
+            - ExtensionVolumeName: !Var arguments.base_shell.docker_compose.volume_name.vscode_extension
+              HomeDirectory: !Var let.base_shell.common.home_dir
+          vscode_insider_extension:
+            !Sub
+            - "${InsiderExtensionVolumeName}:${HomeDirectory}/.vscode-insider-server/extensions"
+            - InsiderExtensionVolumeName: !Var arguments.base_shell.docker_compose.volume_name.vscode_insider_extension
+              HomeDirectory: !Var let.base_shell.common.home_dir
 
 configs:
   vscode_devcontainer:
     # For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
     # https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/docker-from-docker-compose
-    name: !Var arguments.base_shell.devcontainer_name
+    name: !Var arguments.base_shell.devcontainer.name
     dockerComposeFile:
       # Enter your docker-compose.yml path in source file.
       - ./docker-compose.yml
-    service: !Key arguments.base_shell
-    workspaceFolder: !Var arguments.base_shell.container_working_directory
+    service: !Var let.base_shell.common.service_name
+    workspaceFolder: !Var arguments.base_shell.devcontainer.working_directory
     # Use this environment variable if you need to bind mount your local source code into a new container.
     remoteEnv:
       LOCAL_WORKSPACE_FOLDER: ${localWorkspaceFolder}
@@ -57,12 +79,7 @@ configs:
       HISTFILE: ${containerWorkspaceFolder}/.devcontainer/.zhistory
     # Set *default* container specific settings.json values on container create.
     settings:
-      terminal.integrated.cwd:
-        !Join
-        - "/"
-        -
-          - "${containerWorkspaceFolder}"
-          - !Var arguments.base_shell.container_terminal_cwd
+      terminal.integrated.cwd: !Var let.base_shell.devcontainer.terminal_absolute_cwd
       git-graph.maxDepthOfRepoSearch: 1
     # Add the IDs of extensions you want installed when the container is created.
     extensions:
@@ -79,25 +96,20 @@ configs:
     # forwardPorts: []
     # Use 'postCreateCommand' to run commands after the container is created.
     # postCreateCommand: ""
-    remoteUser: !Var arguments.base_shell.container_user_name
+    remoteUser: !Var arguments.base_shell.common.user_name
   docker_compose:
     version: "3.7"
     services:
-      !Key arguments.base_shell:
+      !Var let.base_shell.common.service_name:
         build:
-          context:
-            !Sub
-            - !Var arguments.base_shell.docker_default_context_path_format
-            - ServiceName: !Key arguments.base_shell
-          dockerfile: !Var arguments.base_shell.dockerfile
+          context: !Var let.base_shell.docker_compose.build.context
+          dockerfile: !Var arguments.base_shell.docker_compose.build.dockerfile
         volumes:
+          # Forwards the local Docker socket to the container.
           - /var/run/docker.sock:/var/run/docker-host.sock
-          - !Sub
-            - "${HostMountPath}:${ContainerWorkingDirectory}:cached"
-            - HostMountPath: !Var arguments.base_shell.host_mountpoint_path
-              ContainerWorkingDirectory: !Var arguments.base_shell.container_working_directory
-          - !Var let.base_shell.docker_compose_vscode_extension_mount_setting
-          - !Var let.base_shell.docker_compose_vscode_insider_extension_mount_setting
+          - !Var let.base_shell.docker_compose.mount_setting.container_working_directory
+          - !Var let.base_shell.docker_compose.mount_setting.vscode_extension
+          - !Var let.base_shell.docker_compose.mount_setting.vscode_insider_extension
         # Overrides default command so things don't shut down after the process ends.
         entrypoint: /usr/local/share/docker-init.sh
         command: sleep infinity
@@ -107,9 +119,9 @@ configs:
         # security_opt:
         #   - seccomp:unconfined
         # Uncomment the next line to use a non-root user for all processes.
-        user: !Var arguments.base_shell.container_user_name
+        user: !Var arguments.base_shell.common.user_name
         # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
         # (Adding the "ports" property to this file will not forward from a Codespace.)
     volumes:
-      !Var arguments.base_shell.extension_volume_name:
-      !Var arguments.base_shell.insider_extension_volume_name:
+      !Var arguments.base_shell.docker_compose.volume_name.vscode_extension:
+      !Var arguments.base_shell.docker_compose.volume_name.vscode_insider_extension:
