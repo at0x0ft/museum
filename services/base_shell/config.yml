@@ -43,7 +43,6 @@ variables:
             !Sub
             - "./docker/${ServiceName}"
             - ServiceName: !Var let.base_shell.common.service_name
-          dockerfile:
         mount_setting:
           container_working_directory:
             !Sub
