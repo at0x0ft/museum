@@ -73,7 +73,6 @@ func (self *JoinNode) Evaluate(variables map[string]string) (string, error) {
         return "", err
     }
 
-    // joinedResult := ""
     var values []string
     for _, value := range self.values {
         valueNode, err := TerminalFactory(value.Path, value.rawNode)
@@ -84,7 +83,6 @@ func (self *JoinNode) Evaluate(variables map[string]string) (string, error) {
         if err != nil {
             return "", err
         }
-        // joinedResult += delimiter + value
         values = append(values, value)
     }
     return strings.Join(values, delimiter), nil
