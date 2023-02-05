@@ -8,6 +8,15 @@ COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/cache \
     go mod download
 
+FROM golang:${GO_VERSION} as dev
+
+WORKDIR /workspace
+COPY --from=base ${GOPATH}/pkg ${GOPATH}/
+RUN --mount=type=cache,target=/go/pkg/cache \
+    # go install packages
+    go install \
+        github.com/spf13/cobra-cli@latest
+
 FROM golang:${GO_VERSION} as builder
 
 WORKDIR /workspace

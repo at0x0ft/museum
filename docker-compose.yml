@@ -19,7 +19,7 @@ services:
   museum_dev:
     build:
       <<: *museum_build_config
-      target: base
+      target: dev
     working_dir: /workspace
     volumes:
       - ./src:/workspace
@@ -29,4 +29,4 @@ services:
       <<: *museum_build_config
       target: prod
     working_dir: /workspace
-    entrypoint: /museum
+    entrypoint: /museum deploy
