@@ -57,16 +57,16 @@ make_devcontainer_directory_if_not_exists() {
 
 evaluate_yaml() {
   local readonly DOCKER_COMPOSE_PATH="${SCRIPT_ROOT}/docker-compose.yml"
-  local readonly YAML_EVALUATOR_SERVICE_NAME='yaml_evaluator'
-  local readonly YAML_EVALUATOR_SERVICE_WORKING_DIRPATH='/workspace'
+  local readonly MUSEUM_SERVICE_NAME='museum'
+  local readonly MUSEUM_SERVICE_WORKING_DIRPATH='/workspace'
   local readonly CONFIG_YAML_RELPATH="./${CONFIG_FILENAME}"
   local readonly OUTPUT_DIRECTORY_RELPATH='.'
   local readonly host_mountpoint_abspath="$(readlinkf "${1}")"
 
   docker-compose -f "${DOCKER_COMPOSE_PATH}" run --rm \
     --user="$(id -u):$(id -g)" \
-    -v "${host_mountpoint_abspath}:${YAML_EVALUATOR_SERVICE_WORKING_DIRPATH}" \
-    "${YAML_EVALUATOR_SERVICE_NAME}" "${CONFIG_YAML_RELPATH}" "${OUTPUT_DIRECTORY_RELPATH}"
+    -v "${host_mountpoint_abspath}:${MUSEUM_SERVICE_WORKING_DIRPATH}" \
+    "${MUSEUM_SERVICE_NAME}" "${CONFIG_YAML_RELPATH}" "${OUTPUT_DIRECTORY_RELPATH}"
 
   return 0
 }
@@ -101,6 +101,7 @@ deploy_docker_config() {
 
 deploy_service_configs() {
   deploy_docker_config 'base_shell' "${1}"
+  # TODO: deploy other service docker related files.
   return 0
 }
 
