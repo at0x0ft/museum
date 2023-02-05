@@ -25,5 +25,5 @@ func (self *VariableNode) Evaluate(variables map[string]string) (string, error) 
     if result, ok := variables[variableMappingKey]; ok {
         return result, nil
     }
-    return "", fmt.Errorf("[Error]: Not found corresponding variable for key = %v.", self.Value)
+    return "", fmt.Errorf("[Error]: Not found corresponding variable for key = %v (line = %v, column = %v) .", self.Value, self.Line, self.Column)
 }

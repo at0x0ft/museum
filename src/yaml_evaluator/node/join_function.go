@@ -1,8 +1,8 @@
 package node
 
 import (
-    // "strings"
     "fmt"
+    "strings"
     "gopkg.in/yaml.v3"
 )
 
@@ -73,7 +73,7 @@ func (self *JoinNode) Evaluate(variables map[string]string) (string, error) {
         return "", err
     }
 
-    joinedResult := ""
+    var values []string
     for _, value := range self.values {
         valueNode, err := TerminalFactory(value.Path, value.rawNode)
         if err != nil {
@@ -83,7 +83,7 @@ func (self *JoinNode) Evaluate(variables map[string]string) (string, error) {
         if err != nil {
             return "", err
         }
-        joinedResult += delimiter + value
+        values = append(values, value)
     }
-    return joinedResult, nil
+    return strings.Join(values, delimiter), nil
 }
