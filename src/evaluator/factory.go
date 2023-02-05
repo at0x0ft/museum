@@ -1,9 +1,9 @@
-package variable
+package evaluator
 
 import (
     "fmt"
     "gopkg.in/yaml.v3"
-    "github.com/at0x0ft/museum/yaml_evaluator/node"
+    "github.com/at0x0ft/museum/node"
 )
 
 func visitableFactory(parentPath string, n *yaml.Node) (visitable, error) {

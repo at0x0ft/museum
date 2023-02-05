@@ -1,6 +1,14 @@
 version: "3.7"
 
+x-museum_build_config: &museum_build_config
+  context: ./src
+  dockerfile: ../Dockerfile
+  args:
+    - GO_VERSION=1.19
+    - ALPINE_VERSION=3.16
+
 services:
+  # TODO: delete this service in the future
   yq:
     image: mikefarah/yq:4.27.2
     volumes:
@@ -8,26 +16,17 @@ services:
     working_dir: /workspace
     entrypoint: yq
 
-  yaml_evaluator_base:
-    build: &yaml_evaluator_base_build_config
-      context: ./src/yaml_evaluator
-      dockerfile: Dockerfile
-      args:
-        - GO_VERSION=1.19
-        - ALPINE_VERSION=3.16
-    working_dir: /workspace
-
-  yaml_evaluator_dev:
+  museum_dev:
     build:
-      <<: *yaml_evaluator_base_build_config
+      <<: *museum_build_config
       target: base
     working_dir: /workspace
     volumes:
-      - ./src/yaml_evaluator:/workspace
+      - ./src:/workspace
 
-  yaml_evaluator:
+  museum:
     build:
-      <<: *yaml_evaluator_base_build_config
+      <<: *museum_build_config
       target: prod
     working_dir: /workspace
-    entrypoint: /yaml_evaluator
+    entrypoint: /museum

@@ -2,7 +2,7 @@ package variable
 
 import (
     // "fmt"   // 4debug
-    "github.com/at0x0ft/museum/yaml_evaluator/node"
+    "github.com/at0x0ft/museum/node"
 )
 
 type aliasNode struct {
