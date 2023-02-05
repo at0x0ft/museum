@@ -1,4 +1,4 @@
-module github.com/at0x0ft/museum/yaml_evaluator
+module github.com/at0x0ft/museum
 
 go 1.19
 

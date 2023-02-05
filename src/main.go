@@ -6,8 +6,8 @@ import (
     "io/ioutil"
     "bytes"
     "gopkg.in/yaml.v3"
-    "github.com/at0x0ft/museum/yaml_evaluator/evaluator"
-    "github.com/at0x0ft/museum/yaml_evaluator/variable"
+    "github.com/at0x0ft/museum/evaluator"
+    "github.com/at0x0ft/museum/variable"
 )
 
 type Configs struct {

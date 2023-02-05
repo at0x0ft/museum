@@ -18,5 +18,5 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 FROM alpine:${ALPINE_VERSION} as prod
 WORKDIR /workspace
-COPY --from=builder /workspace/yaml_evaluator /
-ENTRYPOINT /yaml_evaluator
+COPY --from=builder /workspace/museum /
+ENTRYPOINT /museum

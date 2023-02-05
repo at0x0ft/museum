@@ -3,7 +3,7 @@ package evaluator
 // import "fmt"    // 4debug
 import (
     "gopkg.in/yaml.v3"
-    "github.com/at0x0ft/museum/yaml_evaluator/node"
+    "github.com/at0x0ft/museum/node"
 )
 
 type aliasNode struct {
