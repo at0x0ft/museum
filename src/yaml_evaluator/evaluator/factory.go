@@ -13,6 +13,8 @@ func visitableFactory(parentPath string, n *yaml.Node) (visitable, error) {
         return &sequenceNode{*node.CreateSequence(parentPath, n)}, nil
     } else if node.IsScalar(n) {
         return &scalarNode{*node.CreateScalar(parentPath, n)}, nil
+    } else if node.IsAlias(n) {
+        return &aliasNode{*node.CreateAlias(parentPath, n)}, nil
     }
     return nil, fmt.Errorf("Undefined Node!\nKind = %v, Tag = %v\n", n.Kind, n.Tag)
 }
