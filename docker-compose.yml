@@ -5,7 +5,7 @@ x-museum_build_config: &museum_build_config
   dockerfile: ../Dockerfile
   args:
     - GO_VERSION=1.19
-    - ALPINE_VERSION=3.16
+    - DEBIAN_VERSION=11-slim
 
 services:
   # TODO: delete this service in the future
@@ -19,7 +19,7 @@ services:
   museum_dev:
     build:
       <<: *museum_build_config
-      target: base
+      target: dev
     working_dir: /workspace
     volumes:
       - ./src:/workspace
@@ -29,4 +29,4 @@ services:
       <<: *museum_build_config
       target: prod
     working_dir: /workspace
-    entrypoint: /museum
+    entrypoint: /museum deploy
