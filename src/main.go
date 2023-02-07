@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+Copyright © 2023 at0x0ft <26642966+at0x0ft@users.noreply.github.com>
 
 */
 package main
