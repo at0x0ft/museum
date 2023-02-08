@@ -10,5 +10,6 @@ func Encode(root *yaml.Node, indent int) (string, error) {
     if err != nil {
         return "", err
     }
-    return r.visit(strings.Repeat(" ", indent), 0)
+    content, headComment, footComment, err := r.visit(strings.Repeat(" ", indent), 0)
+    return formatComment(headComment, " ", 0) + content + "\n" + formatComment(footComment, " ", 0), err
 }
