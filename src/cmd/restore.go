@@ -6,7 +6,10 @@ package cmd
 
 import (
     "fmt"
-
+    // "os"
+    "io/ioutil"
+    "path/filepath"
+    "gopkg.in/yaml.v3"
     "github.com/spf13/cobra"
 )
 
@@ -39,6 +42,72 @@ func init() {
 }
 
 // command body
+
+type CollectionConfig struct {
+    Name string `yaml:"name"`
+    Path string `yaml:"path"`
+}
+
+type SkeletonFormat struct {
+    Version string `yaml:"version"`
+    CollectionsPath string `yaml:"collections_path"`
+    Collections []CollectionConfig `yaml:"collections"`
+}
+
 func restore(args []string) {
-    fmt.Println(args)   // 4debug
+    // fmt.Println(args)   // 4debug
+    // assert len(args) == 1
+    skeleton, err := loadSkeleton(args[0])
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    fmt.Println(skeleton)   // 4debug
+    mergeConfig()
+    copyDockerFiles()
+}
+
+func loadSkeleton(filePath string) (*SkeletonFormat, error) {
+    fileAbsPath, err := filepath.Abs(filePath)
+    if err != nil {
+        return nil, err
+    }
+
+    buf, err := ioutil.ReadFile(fileAbsPath)
+    if err != nil {
+        return nil, err
+    }
+
+    var data *SkeletonFormat
+    if err := yaml.Unmarshal(buf, &data); err != nil {
+        return nil, err
+    }
+    data.CollectionsPath = resolvePath(data.CollectionsPath, fileAbsPath)
+    var collections []CollectionConfig
+    for _, collection := range data.Collections {
+        newCollectionConfig := CollectionConfig{
+            Name: collection.Name,
+            Path: resolvePath(collection.Path, data.CollectionsPath),
+        }
+        collections = append(collections, newCollectionConfig)
+    }
+    data.Collections = collections
+    return data, nil
+}
+
+func resolvePath(targetPath, baseAbsPath string) string {
+    if filepath.IsAbs(targetPath) {
+        return targetPath
+    }
+    return filepath.Join(baseAbsPath, targetPath)
+}
+
+func mergeConfig() error {
+    fmt.Println("merging config") // 4debug
+    return nil
+}
+
+func copyDockerFiles() error {
+    fmt.Println("copying docker related files") // 4debug
+    return nil
 }
