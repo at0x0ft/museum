@@ -22,11 +22,13 @@ services:
       target: dev
     working_dir: /workspace
     volumes:
-      - ./src:/workspace
+      - ${PWD}:/workspace
 
   museum:
     build:
       <<: *museum_build_config
       target: prod
     working_dir: /workspace
-    entrypoint: /museum deploy
+    volumes:
+      - ${PWD}:/workspace
+    entrypoint: /museum
