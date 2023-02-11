@@ -22,7 +22,7 @@ services:
       target: dev
     working_dir: /workspace
     volumes:
-      - ${PWD}:/workspace
+      - ./src:/workspace
 
   museum:
     build:
