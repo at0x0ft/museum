@@ -2,7 +2,7 @@ package jsonc
 
 import (
     "fmt"
-    // "regexp"
+    "regexp"
     "strconv"
     "strings"
 )
@@ -38,19 +38,21 @@ func appendQuotation(value string) string {
     return fmt.Sprintf("\"%s\"", escapedValue)
 }
 
+var commentPattern *regexp.Regexp
+
 func formatComment(content string, indent string, level int) string {
     if content == "" {
         return content
     }
 
+    if commentPattern == nil {
+        commentPattern = regexp.MustCompile(`^#\s+`)
+    }
+
     commentLines := strings.Split(content, "\n")
-
-    // pattern := regexp.MustCompile(`^# (.+)$`)
-
     var result []string
     for _, commentLine := range commentLines {
-        // TODO: strip head '# ' for YAML comment
-        result = append(result, fmt.Sprintf("// %s", commentLine))
+        result = append(result, commentPattern.ReplaceAllString(commentLine, "// "))
     }
     return strings.Join(result, fmt.Sprintf("\n%s", strings.Repeat(indent, level)))
 }
