@@ -13,6 +13,7 @@ import (
     "github.com/spf13/cobra"
     "github.com/at0x0ft/museum/evaluator"
     "github.com/at0x0ft/museum/variable"
+    "github.com/at0x0ft/museum/jsonc"
 )
 
 // deployCmd represents the deploy command
@@ -55,7 +56,7 @@ type YamlFormat struct {
 }
 
 const (
-    DevContainerFileName string = "devcontainer.yml"
+    DevContainerFileName string = "devcontainer.json"
     DockerComposeFileName string = "docker-compose.yml"
 )
 
@@ -80,7 +81,7 @@ func deploy(args []string) {
 
     // TODO: Validate args[2] is the directory path or not.
     devContainerFilePath := args[1] + "/" + DevContainerFileName
-    if err := writeYaml(devContainerFilePath, evaluatedDevcontainer); err != nil {
+    if err := writeYamlToJsonc(devContainerFilePath, evaluatedDevcontainer); err != nil {
         fmt.Println(err)
         return
     }
@@ -127,6 +128,18 @@ func writeYaml(filePath string, data *yaml.Node) error {
 
     yamlEncoder.Encode(data)
     if err := ioutil.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
+        return err
+    }
+    return nil
+}
+
+func writeYamlToJsonc(filePath string, data *yaml.Node) error {
+    jsoncContent, err := jsonc.Encode(data, 4)
+    if err != nil {
+        return err
+    }
+
+    if err := ioutil.WriteFile(filePath, []byte(jsoncContent), 0644); err != nil {
         return err
     }
     return nil
