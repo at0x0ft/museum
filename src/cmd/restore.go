@@ -6,7 +6,8 @@ package cmd
 
 import (
     "fmt"
-    // "os"
+    "os"
+    "os/exec"
     "io/ioutil"
     "path/filepath"
     "gopkg.in/yaml.v3"
@@ -63,8 +64,11 @@ func restore(args []string) {
         return
     }
     fmt.Println(skeleton)   // 4debug
-    mergeConfig()
-    copyDockerFiles()
+    mergeConfig(skeleton)
+    if err := copyDockerFiles(skeleton, args[1]); err != nil {
+        fmt.Println(err)
+        return
+    }
 }
 
 func loadSkeleton(filePath string) (*SkeletonFormat, error) {
@@ -102,12 +106,45 @@ func resolvePath(targetPath, baseAbsPath string) string {
     return filepath.Join(baseAbsPath, targetPath)
 }
 
-func mergeConfig() error {
+const configFilename = "config.yml"
+
+func mergeConfig(skeleton *SkeletonFormat) error {
     fmt.Println("merging config") // 4debug
     return nil
 }
 
-func copyDockerFiles() error {
+const dockerFileDirectory = "./docker"
+
+func copyDockerFiles(skeleton *SkeletonFormat, dstRootDir string) error {
     fmt.Println("copying docker related files") // 4debug
+    dstDirname := filepath.Join(dstRootDir, dockerFileDirectory)
+    if err := initializeDirectory(dstDirname); err != nil {
+        return err
+    }
+
+    for _, collection := range skeleton.Collections {
+        srcDir := filepath.Join(collection.Path, dockerFileDirectory)
+        dstDir := filepath.Join(dstDirname, collection.Name)
+        if err := exec.Command("cp", "-r", srcDir, dstDir).Run(); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+func fileExists(path string) bool {
+    _, err := os.Stat(path)
+    return err == nil
+}
+
+func initializeDirectory(path string) error {
+    if fileExists(path) {
+        if err := os.RemoveAll(path); err != nil {
+            return err
+        }
+    }
+    if err := os.Mkdir(path, 0755); err != nil {
+        return err
+    }
     return nil
 }
