@@ -6,14 +6,12 @@ package cmd
 
 import (
     "fmt"
-    // "os"
-    "io/ioutil"
-    "bytes"
+    "os"
     "gopkg.in/yaml.v3"
     "github.com/spf13/cobra"
     "github.com/at0x0ft/museum/evaluator"
     "github.com/at0x0ft/museum/variable"
-    "github.com/at0x0ft/museum/jsonc"
+    "github.com/at0x0ft/museum/schema"
 )
 
 // deployCmd represents the deploy command
@@ -23,7 +21,6 @@ var deployCmd = &cobra.Command{
     Long: `deploy is a subcommand which generate devcontainer.json & docker-compose.yml from config.yml.
 config.yml is generated with running subcommand "restore".`,
     Run: func(cmd *cobra.Command, args []string) {
-        fmt.Println("deploy called")    // 4debug
         deploy(args)
     },
 }
@@ -44,68 +41,37 @@ func init() {
 
 // command body
 
-type Configs struct {
-    VSCodeDevcontainer yaml.Node `yaml:"vscode_devcontainer"`
-    DockerCompose yaml.Node `yaml:"docker_compose"`
-}
-
-type YamlFormat struct {
-    Version string `yaml:"version"`
-    Variables yaml.Node `yaml:"variables"`
-    Configs Configs `yaml:"configs"`
-}
-
-const (
-    DevContainerFileName string = "devcontainer.json"
-    DockerComposeFileName string = "docker-compose.yml"
-)
-
 func deploy(args []string) {
-    data, err := loadYaml(args[0])
+    devcontainerDirPath := args[0]
+    data, err := schema.LoadSeed(devcontainerDirPath)
     if err != nil {
         fmt.Println(err)
-        return
+        os.Exit(1)
     }
 
-    variables, err := variable.Parse(&data.Variables)
+    variables, err := variable.Parse(data)
     if err != nil {
         fmt.Println(err)
-        return
+        os.Exit(1)
     }
-
-    evaluatedDevcontainer, evaluatedDockerCompose, err := evaluateConfigs(&data.Configs, variables)
+    evaluatedDevcontainer, evaluatedDockerCompose, err := evaluateSeed(data, variables)
     if err != nil {
         fmt.Println(err)
-        return
+        os.Exit(1)
     }
 
-    // TODO: Validate args[2] is the directory path or not.
-    devContainerFilePath := args[1] + "/" + DevContainerFileName
-    if err := writeYamlToJsonc(devContainerFilePath, evaluatedDevcontainer); err != nil {
+    if err := schema.WriteDevcontainer(evaluatedDevcontainer, devcontainerDirPath); err != nil {
         fmt.Println(err)
-        return
+        os.Exit(1)
     }
-    dockerComposeFilePath := args[1] + "/" + DockerComposeFileName
-    if err := writeYaml(dockerComposeFilePath, evaluatedDockerCompose); err != nil {
+    if err := schema.WriteDockerCompose(evaluatedDockerCompose, devcontainerDirPath); err != nil {
         fmt.Println(err)
-        return
+        os.Exit(1)
     }
 }
 
-func loadYaml(filePath string) (*YamlFormat, error) {
-    buf, err := ioutil.ReadFile(filePath)
-    if err != nil {
-        return nil, err
-    }
-
-    var data *YamlFormat
-    if err := yaml.Unmarshal(buf, &data); err != nil {
-        return nil, err
-    }
-    return data, nil
-}
-
-func evaluateConfigs(configs *Configs, variables map[string]string) (*yaml.Node, *yaml.Node, error) {
+func evaluateSeed(seed *schema.Seed, variables map[string]string) (*yaml.Node, *yaml.Node, error) {
+    configs := &seed.Configs
     evaluatedDevcontainer, err := evaluator.Evaluate(&configs.VSCodeDevcontainer, variables)
     if err != nil {
         fmt.Println(err)
@@ -118,29 +84,4 @@ func evaluateConfigs(configs *Configs, variables map[string]string) (*yaml.Node,
         return nil, nil, err
     }
     return evaluatedDevcontainer, evaluatedDockerCompose, nil
-}
-
-func writeYaml(filePath string, data *yaml.Node) error {
-    var buf bytes.Buffer
-    yamlEncoder := yaml.NewEncoder(&buf)
-    defer yamlEncoder.Close()
-    yamlEncoder.SetIndent(2)
-
-    yamlEncoder.Encode(data)
-    if err := ioutil.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
-        return err
-    }
-    return nil
-}
-
-func writeYamlToJsonc(filePath string, data *yaml.Node) error {
-    jsoncContent, err := jsonc.Encode(data, 4)
-    if err != nil {
-        return err
-    }
-
-    if err := ioutil.WriteFile(filePath, []byte(jsoncContent), 0644); err != nil {
-        return err
-    }
-    return nil
 }
