@@ -8,10 +8,11 @@ import (
     "fmt"
     "os"
     "os/exec"
-    "io/ioutil"
     "path/filepath"
-    "gopkg.in/yaml.v3"
+    // "gopkg.in/yaml.v3"
     "github.com/spf13/cobra"
+    // "github.com/at0x0ft/museum/merger"
+    "github.com/at0x0ft/museum/schema"
 )
 
 // restoreCmd represents the restore command
@@ -23,7 +24,6 @@ skeleton.yml is a brief configuration for collections which you want to use as m
 If you want to generate devcontainer.json & docker-compose.yml from config.yml,
 please run subcommand "deploy" after running this command.`,
     Run: func(cmd *cobra.Command, args []string) {
-        fmt.Println("restore called")    // 4debug
         restore(args)
     },
 }
@@ -44,97 +44,54 @@ func init() {
 
 // command body
 
-type CollectionConfig struct {
-    Name string `yaml:"name"`
-    Path string `yaml:"path"`
-}
-
-type SkeletonFormat struct {
-    Version string `yaml:"version"`
-    CollectionsPath string `yaml:"collections_path"`
-    Collections []CollectionConfig `yaml:"collections"`
-}
-
 func restore(args []string) {
     // fmt.Println(args)   // 4debug
-    // assert len(args) == 1
-    skeleton, err := loadSkeleton(args[0])
+    // assert len(args) == 2
+    skeleton, err := schema.LoadSkeleton(args[0])
     if err != nil {
         fmt.Println(err)
         return
     }
     fmt.Println(skeleton)   // 4debug
-    mergeConfig(skeleton)
-    if err := copyDockerFiles(skeleton, args[1]); err != nil {
+    if err := mergeSeeds(skeleton); err != nil {
+        fmt.Println(err)
+        return
+    }
+
+    if err := copyDockerFiles(skeleton, args[0]); err != nil {
         fmt.Println(err)
         return
     }
 }
 
-func loadSkeleton(filePath string) (*SkeletonFormat, error) {
-    fileAbsPath, err := filepath.Abs(filePath)
-    if err != nil {
-        return nil, err
-    }
-
-    buf, err := ioutil.ReadFile(fileAbsPath)
-    if err != nil {
-        return nil, err
-    }
-
-    var data *SkeletonFormat
-    if err := yaml.Unmarshal(buf, &data); err != nil {
-        return nil, err
-    }
-    data.CollectionsPath = resolvePath(data.CollectionsPath, fileAbsPath)
-    var collections []CollectionConfig
-    for _, collection := range data.Collections {
-        newCollectionConfig := CollectionConfig{
-            Name: collection.Name,
-            Path: resolvePath(collection.Path, data.CollectionsPath),
-        }
-        collections = append(collections, newCollectionConfig)
-    }
-    data.Collections = collections
-    return data, nil
-}
-
-func resolvePath(targetPath, baseAbsPath string) string {
-    if filepath.IsAbs(targetPath) {
-        return targetPath
-    }
-    return filepath.Join(baseAbsPath, targetPath)
-}
-
-const configFilename = "config.yml"
-
-func mergeConfig(skeleton *SkeletonFormat) error {
-    fmt.Println("merging config") // 4debug
+func mergeSeeds(skeleton *schema.Skeleton) error {
+    fmt.Println("merging seed") // 4debug
+    // configs, err := loadConfigs(skeleton)
+    // if err != nil {
+    //     return err
+    // }
+    // mergedConfig, err := merger.Merge(configs)
+    // if err != nil {
+    //     return err
+    // }
+    // fmt.Println(mergedConfig)   // 4debug
     return nil
 }
 
-const dockerFileDirectory = "./docker"
-
-func copyDockerFiles(skeleton *SkeletonFormat, dstRootDir string) error {
-    fmt.Println("copying docker related files") // 4debug
-    dstDirname := filepath.Join(dstRootDir, dockerFileDirectory)
+func copyDockerFiles(skeleton *schema.Skeleton, dstRootDir string) error {
+    dstDirname := filepath.Join(dstRootDir, schema.DockerFileDirectory)
     if err := initializeDirectory(dstDirname); err != nil {
         return err
     }
 
     for _, collection := range skeleton.Collections {
-        srcDir := filepath.Join(collection.Path, dockerFileDirectory)
+        srcDir := filepath.Join(collection.Path, schema.DockerFileDirectory)
         dstDir := filepath.Join(dstDirname, collection.Name)
         if err := exec.Command("cp", "-r", srcDir, dstDir).Run(); err != nil {
             return err
         }
     }
     return nil
-}
-
-func fileExists(path string) bool {
-    _, err := os.Stat(path)
-    return err == nil
 }
 
 func initializeDirectory(path string) error {
@@ -147,4 +104,9 @@ func initializeDirectory(path string) error {
         return err
     }
     return nil
+}
+
+func fileExists(path string) bool {
+    _, err := os.Stat(path)
+    return err == nil
 }
