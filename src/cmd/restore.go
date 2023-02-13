@@ -50,17 +50,17 @@ func restore(args []string) {
     skeleton, err := schema.LoadSkeleton(args[0])
     if err != nil {
         fmt.Println(err)
-        return
+        os.Exit(1)
     }
     fmt.Println(skeleton)   // 4debug
     if err := mergeSeeds(skeleton); err != nil {
         fmt.Println(err)
-        return
+        os.Exit(1)
     }
 
     if err := copyDockerFiles(skeleton, args[0]); err != nil {
         fmt.Println(err)
-        return
+        os.Exit(1)
     }
 }
 
