@@ -25,6 +25,18 @@ type Seed struct {
     Configs Configs `yaml:"configs"`
 }
 
+func LoadSeeds(pathList map[string]string) (map[string]*Seed, error) {
+    result := make(map[string]*Seed)
+    for name, path := range pathList {
+        seed, err := LoadSeed(path)
+        if err != nil {
+            return nil, err
+        }
+        result[name] = seed
+    }
+    return result, nil
+}
+
 func LoadSeed(dirPath string) (*Seed, error) {
     filePath := filepath.Join(dirPath, SeedFilename)
     buf, err := ioutil.ReadFile(filePath)
