@@ -3,58 +3,55 @@ version: "0"
 
 variables:
   arguments:
-    go:
-      common:
-        user_name: vscode
-      devcontainer:
-        name: Test project.
-        working_directory: /workspace
-        container_terminal_cwd: ./src
-      docker_compose:
-        build:
-          dockerfile: Dockerfile
-          args:
-            go_version: 1.19
-            alpine_version: 3.16
-
-        host_mountpoint_path: ".."
+    common:
+      user_name: vscode
+    devcontainer:
+      name: Test project.
+      working_directory: /workspace
+      container_terminal_cwd: ./src
+    docker_compose:
+      build:
+        dockerfile: Dockerfile
+        args:
+          go_version: 1.19
+          alpine_version: 3.16
+      host_mountpoint_path: ".."
   let:
-    go:
-      common:
-        service_name:
-          prefix: !Key arguments.go
-          base:
-            !Join
-            - "_"
-            -
-              - !Var let.go.common.service_name.prefix
-              - "base"
-          development:
-            !Join
-            - "_"
-            -
-              - !Var let.go.common.service_name.prefix
-              - "dev"
-          production: !Var let.go.common.service_name.prefix
-      devcontainer:
-        terminal_absolute_cwd:
+    common:
+      service_name:
+        prefix: !Key arguments.go
+        base:
           !Join
-          - "/"
+          - "_"
           -
-            - "${containerWorkspaceFolder}"
-            - !Var arguments.go.devcontainer.container_terminal_cwd
-      docker_compose:
-        build:
-          context:
-            !Sub
-            - "./docker/${ServiceName}"
-            - ServiceName: !Var let.go.common.service_name.production
-        mount_setting:
-          container_working_directory:
-            !Sub
-            - "${HostMountPath}:${ContainerWorkingDirectory}:cached"
-            - HostMountPath: !Var arguments.go.docker_compose.host_mountpoint_path
-              ContainerWorkingDirectory: !Var arguments.go.devcontainer.working_directory
+            - !Var let.go.common.service_name.prefix
+            - "base"
+        development:
+          !Join
+          - "_"
+          -
+            - !Var let.go.common.service_name.prefix
+            - "dev"
+        production: !Var let.go.common.service_name.prefix
+    devcontainer:
+      terminal_absolute_cwd:
+        !Join
+        - "/"
+        -
+          - "${containerWorkspaceFolder}"
+          - !Var arguments.go.devcontainer.container_terminal_cwd
+    docker_compose:
+      build:
+        context:
+          !Sub
+          - "./docker/${ServiceName}"
+          - ServiceName: !Var let.go.common.service_name.production
+      mount_setting:
+        container_working_directory:
+          !Sub
+          - "${HostMountPath}:${ContainerWorkingDirectory}:cached"
+          - HostMountPath: !Var arguments.go.docker_compose.host_mountpoint_path
+            ContainerWorkingDirectory: !Var arguments.go.devcontainer.working_directory
 
 configs:
   vscode_devcontainer:
