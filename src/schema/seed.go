@@ -37,6 +37,14 @@ func LoadSeeds(pathList map[string]string) (map[string]*Seed, error) {
     return result, nil
 }
 
+func GetVariables(seeds map[string]*Seed) map[string]*yaml.Node {
+    result := make(map[string]*yaml.Node)
+    for name, seed := range seeds {
+        result[name] = &seed.Variables
+    }
+    return result
+}
+
 func LoadSeed(dirPath string) (*Seed, error) {
     filePath := filepath.Join(dirPath, SeedFilename)
     buf, err := ioutil.ReadFile(filePath)
@@ -51,8 +59,13 @@ func LoadSeed(dirPath string) (*Seed, error) {
     return data, nil
 }
 
-func WriteDevcontainer(data *yaml.Node, dirPath string) error {
-    jsoncContent, err := jsonc.Encode(data, 4)
+func (self *Seed) writeToFile() error {
+    // TODO: write seed.yml to file
+    return nil
+}
+
+func (self *Seed) WriteDevcontainer(dirPath string) error {
+    jsoncContent, err := jsonc.Encode(&self.Configs.VSCodeDevcontainer, 4)
     if err != nil {
         return err
     }
@@ -64,14 +77,14 @@ func WriteDevcontainer(data *yaml.Node, dirPath string) error {
     return nil
 }
 
-func WriteDockerCompose(data *yaml.Node, dirPath string) error {
+func (self *Seed) WriteDockerCompose(dirPath string) error {
     filePath := filepath.Join(dirPath, DockerComposeFileName)
     var buf bytes.Buffer
     yamlEncoder := yaml.NewEncoder(&buf)
     defer yamlEncoder.Close()
     yamlEncoder.SetIndent(2)
 
-    yamlEncoder.Encode(data)
+    yamlEncoder.Encode(&self.Configs.DockerCompose)
     if err := ioutil.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
         return err
     }

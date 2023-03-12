@@ -7,7 +7,6 @@ package cmd
 import (
     "fmt"
     "os"
-    "gopkg.in/yaml.v3"
     "github.com/spf13/cobra"
     "github.com/at0x0ft/museum/evaluator"
     "github.com/at0x0ft/museum/variable"
@@ -54,34 +53,37 @@ func deploy(args []string) {
         fmt.Println(err)
         os.Exit(1)
     }
-    evaluatedDevcontainer, evaluatedDockerCompose, err := evaluateSeed(data, variables)
+    evaluatedSeed, err := evaluateSeed(data, variables)
     if err != nil {
         fmt.Println(err)
         os.Exit(1)
     }
 
-    if err := schema.WriteDevcontainer(evaluatedDevcontainer, devcontainerDirPath); err != nil {
+    if err := evaluatedSeed.WriteDevcontainer(devcontainerDirPath); err != nil {
         fmt.Println(err)
         os.Exit(1)
     }
-    if err := schema.WriteDockerCompose(evaluatedDockerCompose, devcontainerDirPath); err != nil {
+    if err := evaluatedSeed.WriteDockerCompose(devcontainerDirPath); err != nil {
         fmt.Println(err)
         os.Exit(1)
     }
 }
 
-func evaluateSeed(seed *schema.Seed, variables map[string]string) (*yaml.Node, *yaml.Node, error) {
+func evaluateSeed(seed *schema.Seed, variables map[string]string) (*schema.Seed, error) {
     configs := &seed.Configs
     evaluatedDevcontainer, err := evaluator.Evaluate(&configs.VSCodeDevcontainer, variables)
     if err != nil {
-        fmt.Println(err)
-        return nil, nil, err
+        return nil, err
     }
-
     evaluatedDockerCompose, err := evaluator.Evaluate(&configs.DockerCompose, variables)
     if err != nil {
-        fmt.Println(err)
-        return nil, nil, err
+        return nil, err
     }
-    return evaluatedDevcontainer, evaluatedDockerCompose, nil
+
+    evaluatedSeed := *seed
+    evaluatedSeed.Configs = schema.Configs{
+        VSCodeDevcontainer: *evaluatedDevcontainer,
+        DockerCompose: *evaluatedDockerCompose,
+    }
+    return &evaluatedSeed, nil
 }
