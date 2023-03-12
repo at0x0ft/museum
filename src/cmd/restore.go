@@ -9,9 +9,8 @@ import (
     "os"
     "os/exec"
     "path/filepath"
-    // "gopkg.in/yaml.v3"
     "github.com/spf13/cobra"
-    // "github.com/at0x0ft/museum/merger"
+    "github.com/at0x0ft/museum/merger"
     "github.com/at0x0ft/museum/schema"
 )
 
@@ -66,14 +65,16 @@ func restore(args []string) {
 
 func mergeSeeds(skeleton *schema.Skeleton) error {
     fmt.Println("merging seed") // 4debug
-    // configs, err := loadConfigs(skeleton)
-    // if err != nil {
-    //     return err
-    // }
-    // mergedConfig, err := merger.Merge(configs)
-    // if err != nil {
-    //     return err
-    // }
+    mergedConfig, err := merger.Merge(skeleton)
+    // merger.Merge(seeds) // 4debug
+    if err != nil {
+        return err
+    }
+
+    // 4debug
+    if err := mergedConfig.WriteToFile("/tmp/test_project"); err != nil {
+        return err
+    }
     // fmt.Println(mergedConfig)   // 4debug
     return nil
 }

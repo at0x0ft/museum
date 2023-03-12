@@ -25,26 +25,6 @@ type Seed struct {
     Configs Configs `yaml:"configs"`
 }
 
-func LoadSeeds(pathList map[string]string) (map[string]*Seed, error) {
-    result := make(map[string]*Seed)
-    for name, path := range pathList {
-        seed, err := LoadSeed(path)
-        if err != nil {
-            return nil, err
-        }
-        result[name] = seed
-    }
-    return result, nil
-}
-
-func GetVariables(seeds map[string]*Seed) map[string]*yaml.Node {
-    result := make(map[string]*yaml.Node)
-    for name, seed := range seeds {
-        result[name] = &seed.Variables
-    }
-    return result
-}
-
 func LoadSeed(dirPath string) (*Seed, error) {
     filePath := filepath.Join(dirPath, SeedFilename)
     buf, err := ioutil.ReadFile(filePath)
@@ -59,8 +39,18 @@ func LoadSeed(dirPath string) (*Seed, error) {
     return data, nil
 }
 
-func (self *Seed) writeToFile() error {
-    // TODO: write seed.yml to file
+func (self *Seed) WriteToFile(dirPath string) error {
+    // filePath := filepath.Join(dirPath, SeedFilename)
+    filePath := filepath.Join(dirPath, "seed2.yml")    // 4debug
+    var buf bytes.Buffer
+    yamlEncoder := yaml.NewEncoder(&buf)
+    defer yamlEncoder.Close()
+    yamlEncoder.SetIndent(2)
+
+    yamlEncoder.Encode(&self)
+    if err := ioutil.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
+        return err
+    }
     return nil
 }
 
