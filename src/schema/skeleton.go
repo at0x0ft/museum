@@ -56,11 +56,3 @@ func resolvePath(targetPath, baseAbsPath string) string {
     }
     return filepath.Join(baseAbsPath, targetPath)
 }
-
-func GetSeedPathList(skeleton *Skeleton) map[string]string {
-    result := make(map[string]string)
-    for _, collection := range skeleton.Collections {
-        result[collection.Name] = collection.Path
-    }
-    return result
-}
