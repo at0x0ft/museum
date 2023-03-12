@@ -51,6 +51,11 @@ func restore(args []string) {
         fmt.Println(err)
         os.Exit(1)
     }
+    if !needToMerge(skeleton) {
+        fmt.Println("[Warn] Cannot merge collections since not any collection is given. Exit.")
+        return
+    }
+
     fmt.Println(skeleton)   // 4debug
     if err := mergeSeeds(skeleton); err != nil {
         fmt.Println(err)
@@ -61,6 +66,10 @@ func restore(args []string) {
         fmt.Println(err)
         os.Exit(1)
     }
+}
+
+func needToMerge(skeleton *schema.Skeleton) bool {
+    return !skeleton.HasEmptyCollection()
 }
 
 func mergeSeeds(skeleton *schema.Skeleton) error {

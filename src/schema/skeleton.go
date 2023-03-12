@@ -56,3 +56,7 @@ func resolvePath(targetPath, baseAbsPath string) string {
     }
     return filepath.Join(baseAbsPath, targetPath)
 }
+
+func (self *Skeleton) HasEmptyCollection() bool {
+    return len(self.Collections) == 0
+}
