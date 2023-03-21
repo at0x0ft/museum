@@ -3,62 +3,60 @@ version: "0"
 
 variables:
   arguments:
-    base_shell:
-      common:
-        user_name: vscode
-      devcontainer:
-        name: Test project.
-        working_directory: /workspace
-        container_terminal_cwd: ./src
-      docker_compose:
-        build:
-          dockerfile: Dockerfile
-        host_mountpoint_path: ".."
-        volume_name:
-          vscode_extension: vscode-extensions
-          vscode_insider_extension: vscode-insider-extensions
+    common:
+      user_name: vscode
+    devcontainer:
+      name: Test project.
+      working_directory: /workspace
+      container_terminal_cwd: ./src
+    docker_compose:
+      build:
+        dockerfile: Dockerfile
+      host_mountpoint_path: ".."
+      volume_name:
+        vscode_extension: vscode-extensions
+        vscode_insider_extension: vscode-insider-extensions
   let:
-    base_shell:
-      common:
-        service_name: !Key arguments.base_shell
-        home_dir:
-          !If
-          - !Equals
-            - !Var arguments.base_shell.common.user_name
-            - "root"
-          - "/root"
-          - !Sub
-            - "/home/${UserName}"
-            - UserName: !Var arguments.base_shell.common.user_name
-      devcontainer:
-        terminal_absolute_cwd:
-          !Join
-          - "/"
-          -
-            - "${containerWorkspaceFolder}"
-            - !Var arguments.base_shell.devcontainer.container_terminal_cwd
-      docker_compose:
-        build:
-          context:
-            !Sub
-            - "./docker/${ServiceName}"
-            - ServiceName: !Var let.base_shell.common.service_name
-        mount_setting:
-          container_working_directory:
-            !Sub
-            - "${HostMountPath}:${ContainerWorkingDirectory}:cached"
-            - HostMountPath: !Var arguments.base_shell.docker_compose.host_mountpoint_path
-              ContainerWorkingDirectory: !Var arguments.base_shell.devcontainer.working_directory
-          vscode_extension:
-            !Sub
-            - "${ExtensionVolumeName}:${HomeDirectory}/.vscode-server/extensions"
-            - ExtensionVolumeName: !Var arguments.base_shell.docker_compose.volume_name.vscode_extension
-              HomeDirectory: !Var let.base_shell.common.home_dir
-          vscode_insider_extension:
-            !Sub
-            - "${InsiderExtensionVolumeName}:${HomeDirectory}/.vscode-insider-server/extensions"
-            - InsiderExtensionVolumeName: !Var arguments.base_shell.docker_compose.volume_name.vscode_insider_extension
-              HomeDirectory: !Var let.base_shell.common.home_dir
+    common:
+      service_name: !Key arguments.base_shell
+      home_dir:
+        !If
+        - !Equals
+          - !Var arguments.base_shell.common.user_name
+          - "root"
+        - "/root"
+        - !Sub
+          - "/home/${UserName}"
+          - UserName: !Var arguments.base_shell.common.user_name
+    devcontainer:
+      terminal_absolute_cwd:
+        !Join
+        - "/"
+        -
+          - "${containerWorkspaceFolder}"
+          - !Var arguments.base_shell.devcontainer.container_terminal_cwd
+    docker_compose:
+      build:
+        context:
+          !Sub
+          - "./docker/${ServiceName}"
+          - ServiceName: !Var let.base_shell.common.service_name
+      mount_setting:
+        container_working_directory:
+          !Sub
+          - "${HostMountPath}:${ContainerWorkingDirectory}:cached"
+          - HostMountPath: !Var arguments.base_shell.docker_compose.host_mountpoint_path
+            ContainerWorkingDirectory: !Var arguments.base_shell.devcontainer.working_directory
+        vscode_extension:
+          !Sub
+          - "${ExtensionVolumeName}:${HomeDirectory}/.vscode-server/extensions"
+          - ExtensionVolumeName: !Var arguments.base_shell.docker_compose.volume_name.vscode_extension
+            HomeDirectory: !Var let.base_shell.common.home_dir
+        vscode_insider_extension:
+          !Sub
+          - "${InsiderExtensionVolumeName}:${HomeDirectory}/.vscode-insider-server/extensions"
+          - InsiderExtensionVolumeName: !Var arguments.base_shell.docker_compose.volume_name.vscode_insider_extension
+            HomeDirectory: !Var let.base_shell.common.home_dir
 
 configs:
   vscode_devcontainer:
