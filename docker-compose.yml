@@ -8,14 +8,6 @@ x-museum_build_config: &museum_build_config
     - DEBIAN_VERSION=11-slim
 
 services:
-  # TODO: delete this service in the future
-  yq:
-    image: mikefarah/yq:4.27.2
-    volumes:
-      - .:/workspace
-    working_dir: /workspace
-    entrypoint: yq
-
   museum_dev:
     build:
       <<: *museum_build_config
