@@ -9,9 +9,8 @@ import (
     "os"
     "os/exec"
     "path/filepath"
-    // "gopkg.in/yaml.v3"
     "github.com/spf13/cobra"
-    // "github.com/at0x0ft/museum/merger"
+    "github.com/at0x0ft/museum/merger"
     "github.com/at0x0ft/museum/schema"
 )
 
@@ -45,36 +44,43 @@ func init() {
 // command body
 
 func restore(args []string) {
-    // fmt.Println(args)   // 4debug
-    // assert len(args) == 2
-    skeleton, err := schema.LoadSkeleton(args[0])
+    // assert len(args) == 1
+    dstRootDir := args[0]
+
+    skeleton, err := schema.LoadSkeleton(dstRootDir)
     if err != nil {
         fmt.Println(err)
         os.Exit(1)
     }
-    fmt.Println(skeleton)   // 4debug
-    if err := mergeSeeds(skeleton); err != nil {
+    if !needToMerge(skeleton) {
+        fmt.Println("[Warn] Cannot merge collections since not any collection is given. Exit.")
+        return
+    }
+
+    if err := mergeSeeds(skeleton, dstRootDir); err != nil {
         fmt.Println(err)
         os.Exit(1)
     }
 
-    if err := copyDockerFiles(skeleton, args[0]); err != nil {
+    if err := copyDockerFiles(skeleton, dstRootDir); err != nil {
         fmt.Println(err)
         os.Exit(1)
     }
 }
 
-func mergeSeeds(skeleton *schema.Skeleton) error {
-    fmt.Println("merging seed") // 4debug
-    // configs, err := loadConfigs(skeleton)
-    // if err != nil {
-    //     return err
-    // }
-    // mergedConfig, err := merger.Merge(configs)
-    // if err != nil {
-    //     return err
-    // }
-    // fmt.Println(mergedConfig)   // 4debug
+func needToMerge(skeleton *schema.Skeleton) bool {
+    return !skeleton.HasEmptyCollection()
+}
+
+func mergeSeeds(skeleton *schema.Skeleton, dstRootDir string) error {
+    mergedConfig, err := merger.Merge(skeleton)
+    if err != nil {
+        return err
+    }
+
+    if err := mergedConfig.WriteToFile(dstRootDir); err != nil {
+        return err
+    }
     return nil
 }
 
