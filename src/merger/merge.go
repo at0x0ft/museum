@@ -1,7 +1,5 @@
 package merger
 
-import "fmt"    // 4debug
-// import "github.com/at0x0ft/museum/debug"    // 4debug
 import (
     "gopkg.in/yaml.v3"
     "github.com/at0x0ft/museum/schema"
@@ -18,21 +16,16 @@ func Merge(skeleton *schema.Skeleton) (*schema.Seed, error) {
         return nil, err
     }
 
-    fmt.Println(seedMetadataList)  // 4debug
-
     mergedVariables := mergeVariables(seedMetadataList)
+    mergedConfigs, err := mergeConfigs(seedMetadataList)
+    if err != nil {
+        return nil, err
+    }
 
-    // TODO: merge Configs
-    // TODO: replace Tag paths
-
-    // r, err := visitableFactory("", root)
-    // if err != nil {
-    //     return nil, err
-    // }
-    // return r.visit(variables)
     mergedSeed := &schema.Seed{
         Version: "0",
         Variables: *mergedVariables,
+        Configs: *mergedConfigs,
     }
     return mergedSeed, nil
 }
@@ -75,4 +68,63 @@ func createNewMappingNode() *yaml.Node {
         Kind: yaml.MappingNode,
         Tag: "!!map",
     }
+}
+
+func mergeConfigs(seedMetadataList []seedMetadata) (*schema.Configs, error) {
+    var mergedDevContainerRoot, mergedDockerComposeRoot *yaml.Node
+    var err error
+    mergedDevContainerRoot, err = mergeDevcontainerConfigs(seedMetadataList)
+    if err != nil {
+        return nil, err
+    }
+    mergedDockerComposeRoot, err = mergeDockerComposes(seedMetadataList)
+    if err != nil {
+        return nil, err
+    }
+    mergedConfigs := &schema.Configs{
+        VSCodeDevcontainer: *mergedDevContainerRoot,
+        DockerCompose: *mergedDockerComposeRoot,
+    }
+    return mergedConfigs, nil
+}
+
+func mergeDevcontainerConfigs(seedMetadataList []seedMetadata) (*yaml.Node, error) {
+    rootNodePath := ""
+    appendedConfigs := make(map[string]visitable)
+    var err error
+    for _, seedMetadata := range seedMetadataList {
+        appendedConfigs, err = appendConfig(
+            &seedMetadata.Data.Configs.VSCodeDevcontainer,
+            appendedConfigs,
+        )
+        if err != nil {
+            return nil, err
+        }
+    }
+    return appendedConfigs[rootNodePath].getRaw(), nil
+}
+
+func mergeDockerComposes(seedMetadataList []seedMetadata) (*yaml.Node, error) {
+    rootNodePath := ""
+    appendedConfigs := make(map[string]visitable)
+    var err error
+    for _, seedMetadata := range seedMetadataList {
+        appendedConfigs, err = appendConfig(
+            &seedMetadata.Data.Configs.DockerCompose,
+            appendedConfigs,
+        )
+        if err != nil {
+            return nil, err
+        }
+    }
+    return appendedConfigs[rootNodePath].getRaw(), nil
+}
+
+func appendConfig(root *yaml.Node, appendedConfigs map[string]visitable) (map[string]visitable, error) {
+    r, err := visitableFactory("", root)
+    if err != nil {
+        return nil, err
+    }
+    _, err = r.visit(appendedConfigs)
+    return appendedConfigs, err
 }
