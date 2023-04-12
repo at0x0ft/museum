@@ -31,12 +31,13 @@ VSCode docker remote development environment template collections.
    base_shell:
      path: ./services/base_shell
    ```
-2. Run [`restore.sh`](./restore.sh) giving `.devcontainer` directory created previous steps as the argument.
+2. Run `restore` command giving input and output base `.devcontainer` directory as argument. This command will generate `.devcontainer/seed.yml` from `.devcontainer/skeleton.yml`!
    ```sh
-   ./restore.sh ../test_project/.devcontainer
+   docker-compose run --rm museum restore test_project/.devcontainer
    ```
-3. Check generated `.devconainer/config.yml` out! This is a blue print of `devcontainer.json` & `docker-compose.yml` for VSCode Remote Development for Docker. Fix it at your preference.
-4. Run `deploy` command giving input `.devcontainer/config.yml` file and output `.devcontainer` directory as argument. This command will generate canonical `.devcontainer/devcontainer.json` & `.devcontainer/docker-composer.yml`!
+3. Check generated `.devconainer/seed.yml` out! This is a blue print of `devcontainer.json` & `docker-compose.yml` for VSCode Remote Development for Docker. Fix it at your preference.
+4. Run `deploy` command giving input and output base `.devcontainer` directory as argument. This command will generate canonical `.devcontainer/devcontainer.json` & `.devcontainer/docker-composer.yml` from `.devcontainer/seed.yml`!
    ```sh
-   docker-compose run --rm museum deploy test_project/.devcontainer/config.yml test_project/.devcontainer
+   docker-compose run --rm museum deploy test_project/.devcontainer
    ```
+5. Check generated `.devconainer/devcontainer.json` & `.devcontainer/docker-compose.yml` out!
