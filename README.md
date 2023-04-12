@@ -18,7 +18,6 @@ VSCode docker remote development environment template collections.
 1. VSCode
 2. Docker (with Docker Buildkit)
 3. Docker Compose
-4. [yq](https://github.com/mikefarah/yq)
 
 ## Quick Tutorial (Running Flow Example)
 
