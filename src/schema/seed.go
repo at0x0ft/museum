@@ -40,9 +40,7 @@ func LoadSeed(dirPath string) (*Seed, error) {
 }
 
 func (self *Seed) WriteToFile(dirPath string) error {
-    // filePath := filepath.Join(dirPath, SeedFilename)
-    // TODO: temporary output for debug
-    filePath := filepath.Join(dirPath, "seed2.yml")    // 4debug
+    filePath := filepath.Join(dirPath, SeedFilename)
     var buf bytes.Buffer
     yamlEncoder := yaml.NewEncoder(&buf)
     defer yamlEncoder.Close()
