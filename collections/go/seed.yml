@@ -14,12 +14,12 @@ variables:
         dockerfile: Dockerfile
         args:
           go_version: 1.19
-          alpine_version: 3.16
+          debian_version: 11-slim
       host_mountpoint_path: ".."
   let:
     common:
       service_name:
-        prefix: !Key arguments.go
+        prefix: !Const collection.name
         base:
           !Join
           - "_"
@@ -46,6 +46,19 @@ variables:
           !Sub
           - "./docker/${ServiceName}"
           - ServiceName: !Var let.common.service_name.production
+        args:
+          go_version:
+            !Join
+            - "="
+            -
+              - "GO_VERSION"
+              - !Var arguments.docker_compose.build.args.go_version
+          debian_version:
+            !Join
+            - "="
+            -
+              - "DEBIAN_VERSION"
+              - !Var arguments.docker_compose.build.args.debian_version
       mount_setting:
         container_working_directory:
           !Sub
@@ -64,8 +77,8 @@ configs:
           context: !Var let.docker_compose.build.context
           dockerfile: !Var arguments.docker_compose.build.dockerfile
           args:
-            - !Var arguments.docker_compose.build.args.go_version
-            - !Var arguments.docker_compose.build.args.alpine_version
+            - !Var let.docker_compose.build.args.go_version
+            - !Var let.docker_compose.build.args.debian_version
         working_dir: !Var arguments.devcontainer.working_directory
       !Var let.common.service_name.development:
         build:
