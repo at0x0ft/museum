@@ -17,7 +17,7 @@ type MappingElement struct {
 }
 
 func IsMapping(node *yaml.Node) bool {
-    return node.Kind == yaml.MappingNode
+    return (node.Kind & yaml.MappingNode) != 0
 }
 
 func CreateMapping(parentPath string, node *yaml.Node) *MappingNode {

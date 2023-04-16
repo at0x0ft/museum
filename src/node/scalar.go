@@ -11,7 +11,7 @@ type ScalarNode struct {
 }
 
 func IsScalar(node *yaml.Node) bool {
-    return node.Kind == yaml.ScalarNode
+    return (node.Kind & yaml.ScalarNode) != 0
 }
 
 func CreateScalar(parentPath string, node *yaml.Node) *ScalarNode {

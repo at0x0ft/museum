@@ -11,7 +11,7 @@ type SequenceNode struct {
 }
 
 func IsSequence(node *yaml.Node) bool {
-    return node.Kind == yaml.SequenceNode
+    return (node.Kind & yaml.SequenceNode) != 0
 }
 
 func CreateSequence(parentPath string, node *yaml.Node) *SequenceNode {

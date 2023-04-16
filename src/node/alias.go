@@ -11,7 +11,7 @@ type AliasNode struct {
 }
 
 func IsAlias(node *yaml.Node) bool {
-    return node.Kind == yaml.AliasNode
+    return (node.Kind & yaml.AliasNode) != 0
 }
 
 func CreateAlias(parentPath string, node *yaml.Node) *AliasNode {

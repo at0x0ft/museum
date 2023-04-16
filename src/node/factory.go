@@ -15,8 +15,6 @@ func TerminalFactory(parentPath string, node *yaml.Node) (Terminal, error) {
         return CreateSubstitution(parentPath, node), nil
     } else if IsJoin(node) {
         return CreateJoin(parentPath, node), nil
-    } else if IsKey(node) {
-        return CreateKey(parentPath, node), nil
     } else if IsIf(node) {
         return CreateIf(parentPath, node), nil
     } else if IsEquals(node) {

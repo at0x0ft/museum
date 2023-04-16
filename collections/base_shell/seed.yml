@@ -18,7 +18,7 @@ variables:
         vscode_insider_extension: vscode-insider-extensions
   let:
     common:
-      service_name: !Key arguments.base_shell
+      service_name: !Const collection.name
       home_dir:
         !If
         - !Equals
