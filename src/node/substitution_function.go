@@ -25,7 +25,7 @@ type SubstitutionNode struct {
     variableMappings []substitutionVariableMappingNode
 }
 
-func isSubstitution(node *yaml.Node) bool {
+func IsSubstitution(node *yaml.Node) bool {
     isSubTaggedSequence := IsSequence(node) && node.Tag == SubstitutionNodeTag
     hasTwoChildNodes := len(node.Content) == 2
     if !(isSubTaggedSequence && hasTwoChildNodes) {
@@ -38,7 +38,7 @@ func isSubstitution(node *yaml.Node) bool {
         mappingHasTerminals(variableMappingNode)
 }
 
-func createSubstitution(path string, node *yaml.Node) *SubstitutionNode {
+func CreateSubstitution(path string, node *yaml.Node) *SubstitutionNode {
     childPathSuffixFormat := "[%d]"
 
     templateExpressionIndex := 0

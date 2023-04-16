@@ -30,7 +30,7 @@ type IfNode struct {
     falseExpression ifFalseExpressionNode
 }
 
-func isIf(node *yaml.Node) bool {
+func IsIf(node *yaml.Node) bool {
     isIfTaggedSequence := IsSequence(node) && node.Tag == IfNodeTag
     hasThreeChildNodes := len(node.Content) == 3
     if !(isIfTaggedSequence && hasThreeChildNodes) {
@@ -43,7 +43,7 @@ func isIf(node *yaml.Node) bool {
     return IsTerminal(predicateNode) && IsTerminal(trueExpressionNode) && IsTerminal(falseExpressionNode)
 }
 
-func createIf(path string, node *yaml.Node) *IfNode {
+func CreateIf(path string, node *yaml.Node) *IfNode {
     childPathSuffixFormat := "[%d]"
 
     predicateIndex := 0

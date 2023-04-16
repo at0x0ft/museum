@@ -19,7 +19,7 @@ type EqualsNode struct {
     rightVariable equalsVariableNode
 }
 
-func isEquals(node *yaml.Node) bool {
+func IsEquals(node *yaml.Node) bool {
     isEqualsTaggedSequence := IsSequence(node) && node.Tag == EqualsNodeTag
     hasTwoChildNodes := len(node.Content) == 2
     if !(isEqualsTaggedSequence && hasTwoChildNodes) {
@@ -31,7 +31,7 @@ func isEquals(node *yaml.Node) bool {
     return IsTerminal(leftVariableNode) && IsTerminal(rightVariableNode)
 }
 
-func createEquals(parentPath string, node *yaml.Node) *EqualsNode {
+func CreateEquals(parentPath string, node *yaml.Node) *EqualsNode {
     childPathSuffixFormat := "[%d]"
 
     leftVariableIndex := 0
