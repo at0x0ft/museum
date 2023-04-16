@@ -12,18 +12,28 @@ type VariableNode struct {
     yaml.Node
 }
 
-func isVariable(node *yaml.Node) bool {
+func IsVariable(node *yaml.Node) bool {
     return node.Kind == yaml.ScalarNode && node.Style == yaml.TaggedStyle && node.Tag == VariableNodeTag
 }
 
-func createVariable(path string, node *yaml.Node) *VariableNode {
+func CreateVariable(path string, node *yaml.Node) *VariableNode {
     return &VariableNode{path, *node}
 }
 
 func (self *VariableNode) Evaluate(variables map[string]string) (string, error) {
-    variableMappingKey := "." + self.Value
-    if result, ok := variables[variableMappingKey]; ok {
+    if result, ok := variables[self.Value]; ok {
         return result, nil
     }
     return "", fmt.Errorf("[Error]: Not found corresponding variable for key = %v (line = %v, column = %v) .", self.Value, self.Line, self.Column)
+}
+
+func (self *VariableNode) isRelativeVariablePath() bool {
+    return len(self.Value) > 0 && self.Value[0:1] != "."
+}
+
+func (self *VariableNode) GetCanonicalValuePath(collectionName string) string {
+    if self.isRelativeVariablePath() {
+        return fmt.Sprintf(".%s.%s", collectionName, self.Value)
+    }
+    return self.Value
 }

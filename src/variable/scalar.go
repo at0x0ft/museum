@@ -1,7 +1,7 @@
 package variable
 
+// import "fmt"   // 4debug
 import (
-    // "fmt"   // 4debug
     "github.com/at0x0ft/museum/node"
 )
 

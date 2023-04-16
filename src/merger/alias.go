@@ -10,7 +10,7 @@ type aliasNode struct {
     node.AliasNode
 }
 
-func (self *aliasNode) visit(visitedNode map[string]visitable) (*yaml.Node, error) {
+func (self *aliasNode) visit(visitedNode map[string]visitable, collectionName string) (*yaml.Node, error) {
     var addExpectedNode *yaml.Node
     addExpectedNode = nil
     if _, visited := visitedNode[self.Path]; !visited {

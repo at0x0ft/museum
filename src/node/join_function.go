@@ -24,7 +24,7 @@ type JoinNode struct {
     values []joinValueNode
 }
 
-func isJoin(node *yaml.Node) bool {
+func IsJoin(node *yaml.Node) bool {
     isJoinTaggedSequence := IsSequence(node) && node.Tag == JoinNodeTag
     hasTwoChildNodes := len(node.Content) == 2
     if !(isJoinTaggedSequence && hasTwoChildNodes) {
@@ -37,7 +37,7 @@ func isJoin(node *yaml.Node) bool {
     return IsTerminal(delimiterNode) && IsSequence(valuesNode) && sequenceHasTerminals(valuesNode)
 }
 
-func createJoin(path string, node *yaml.Node) *JoinNode {
+func CreateJoin(path string, node *yaml.Node) *JoinNode {
     // fmt.Println("!Join")    // 4debug
     childPathSuffixFormat := "[%d]"
 

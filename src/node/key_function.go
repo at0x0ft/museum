@@ -13,11 +13,11 @@ type KeyNode struct {
     yaml.Node
 }
 
-func isKey(node *yaml.Node) bool {
+func IsKey(node *yaml.Node) bool {
     return IsScalar(node) && node.Style == yaml.TaggedStyle && node.Tag == KeyNodeTag
 }
 
-func createKey(path string, node *yaml.Node) *KeyNode {
+func CreateKey(path string, node *yaml.Node) *KeyNode {
     return &KeyNode{path, *node}
 }
 
