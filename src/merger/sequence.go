@@ -10,8 +10,8 @@ type sequenceNode struct {
     node.SequenceNode
 }
 
-func (self *sequenceNode) visit(visitedNode map[string]visitable) (*yaml.Node, error) {
-    shouldAppendChildren, err := self.visitChildren(visitedNode)
+func (self *sequenceNode) visit(visitedNode map[string]visitable, collectionName string) (*yaml.Node, error) {
+    shouldAppendChildren, err := self.visitChildren(visitedNode, collectionName)
     if err != nil {
         return nil, err
     }
@@ -32,7 +32,7 @@ func (self *sequenceNode) visit(visitedNode map[string]visitable) (*yaml.Node, e
     return addExpectedNode, nil
 }
 
-func (self *sequenceNode) visitChildren(visitedNode map[string]visitable) ([]*yaml.Node, error) {
+func (self *sequenceNode) visitChildren(visitedNode map[string]visitable, collectionName string) ([]*yaml.Node, error) {
     // visit children with offset index
     var content []*yaml.Node
     var indexOffset int
@@ -48,7 +48,7 @@ func (self *sequenceNode) visitChildren(visitedNode map[string]visitable) ([]*ya
             return nil, err
         }
 
-        if shouldAppendChild, err := childNode.visit(visitedNode); err != nil {
+        if shouldAppendChild, err := childNode.visit(visitedNode, collectionName); err != nil {
             return nil, err
         } else if shouldAppendChild != nil {
             content = append(content, shouldAppendChild)

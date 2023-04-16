@@ -10,7 +10,10 @@ type scalarNode struct {
     node.ScalarNode
 }
 
-func (self *scalarNode) visit(visitedNode map[string]visitable) (*yaml.Node, error) {
+func (self *scalarNode) visit(visitedNode map[string]visitable, collectionName string) (*yaml.Node, error) {
+    if node.IsVariable(&self.Node) {
+        self.Value = node.CreateVariable(self.Path, &self.Node).GetCanonicalValuePath(collectionName)
+    }
     var addExpectedNode *yaml.Node
     addExpectedNode = nil
     if _, visited := visitedNode[self.Path]; !visited {
