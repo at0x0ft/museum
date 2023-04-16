@@ -7,7 +7,7 @@ type Terminal interface {
 }
 
 func IsTerminal(node *yaml.Node) bool {
-    return IsVariable(node) || IsSubstitution(node) || IsJoin(node) || IsKey(node) ||
+    return IsVariable(node) || IsSubstitution(node) || IsJoin(node) ||
         IsIf(node) || IsEquals(node) || IsScalar(node)
 }
 
