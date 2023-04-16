@@ -24,87 +24,58 @@ variables:
           !Join
           - "_"
           -
-            - !Var let.go.common.service_name.prefix
+            - !Var let.common.service_name.prefix
             - "base"
         development:
           !Join
           - "_"
           -
-            - !Var let.go.common.service_name.prefix
+            - !Var let.common.service_name.prefix
             - "dev"
-        production: !Var let.go.common.service_name.prefix
+        production: !Var let.common.service_name.prefix
     devcontainer:
       terminal_absolute_cwd:
         !Join
         - "/"
         -
           - "${containerWorkspaceFolder}"
-          - !Var arguments.go.devcontainer.container_terminal_cwd
+          - !Var arguments.devcontainer.container_terminal_cwd
     docker_compose:
       build:
         context:
           !Sub
           - "./docker/${ServiceName}"
-          - ServiceName: !Var let.go.common.service_name.production
+          - ServiceName: !Var let.common.service_name.production
       mount_setting:
         container_working_directory:
           !Sub
           - "${HostMountPath}:${ContainerWorkingDirectory}:cached"
-          - HostMountPath: !Var arguments.go.docker_compose.host_mountpoint_path
-            ContainerWorkingDirectory: !Var arguments.go.devcontainer.working_directory
+          - HostMountPath: !Var arguments.docker_compose.host_mountpoint_path
+            ContainerWorkingDirectory: !Var arguments.devcontainer.working_directory
 
 configs:
   vscode_devcontainer:
-    # For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-    # https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/docker-from-docker-compose
-    # name: !Var arguments.base_shell.devcontainer_name
-    # dockerComposeFile:
-    #   # Enter your docker-compose.yml path in source file.
-    #   - ./docker-compose.yml
-    # service: !Key arguments.base_shell
-    # workspaceFolder: !Var arguments.base_shell.container_working_directory
-    # # Use this environment variable if you need to bind mount your local source code into a new container.
-    # remoteEnv:
-    #   LOCAL_WORKSPACE_FOLDER: ${localWorkspaceFolder}
-    #   CONTAINER_WORKSPACE_FOLDER: ${containerWorkspaceFolder}
-    #   PATH: ${containerWorkspaceFolder}/.devcontainer/bin/user:${containerEnv:PATH}
-    #   HISTFILE: ${containerWorkspaceFolder}/.devcontainer/.zhistory
-    # # Set *default* container specific settings.json values on container create.
-    # settings:
-    #   terminal.integrated.cwd:
-    #     !Join
-    #     - "/"
-    #     -
-    #       - "${containerWorkspaceFolder}"
-    #       - !Var arguments.base_shell.container_terminal_cwd
-    #   git-graph.maxDepthOfRepoSearch: 1
-    # Add the IDs of extensions you want installed when the container is created.
     extensions:
       - golang.go
-    # Use 'forwardPorts' to make a list of ports inside the container available locally.
-    # forwardPorts: []
-    # Use 'postCreateCommand' to run commands after the container is created.
-    # postCreateCommand: ""
-    # remoteUser: !Var arguments.base_shell.container_user_name
   docker_compose:
     services:
-      !Var let.go.common.service_name.base:
+      !Var let.common.service_name.base:
         build: &go_build_config
-          context: !Var let.go.docker_compose.build.context
-          dockerfile: !Var arguments.go.docker_compose.build.dockerfile
+          context: !Var let.docker_compose.build.context
+          dockerfile: !Var arguments.docker_compose.build.dockerfile
           args:
-            - !Var arguments.go.docker_compose.build.args.go_version
-            - !Var arguments.go.docker_compose.build.args.alpine_version
-        working_dir: !Var arguments.go.devcontainer.working_directory
-      !Var let.go.common.service_name.development:
+            - !Var arguments.docker_compose.build.args.go_version
+            - !Var arguments.docker_compose.build.args.alpine_version
+        working_dir: !Var arguments.devcontainer.working_directory
+      !Var let.common.service_name.development:
         build:
           <<: *go_build_config
           target: base
-        working_dir: !Var arguments.go.devcontainer.working_directory
+        working_dir: !Var arguments.devcontainer.working_directory
         volumes:
-          - !Var let.go.docker_compose.mount_setting.container_working_directory
-      !Var let.go.common.service_name.production:
+          - !Var let.docker_compose.mount_setting.container_working_directory
+      !Var let.common.service_name.production:
         build:
           <<: *go_build_config
           target: prod
-        working_dir: !Var arguments.go.devcontainer.working_directory
+        working_dir: !Var arguments.devcontainer.working_directory
