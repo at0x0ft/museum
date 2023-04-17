@@ -24,6 +24,7 @@ If you want to generate devcontainer.json & docker-compose.yml from config.yml,
 please run subcommand "deploy" after running this command.`,
     Run: func(cmd *cobra.Command, args []string) {
         restore(args)
+        fmt.Println("Finish restoring!")
     },
 }
 

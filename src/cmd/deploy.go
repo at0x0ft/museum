@@ -21,6 +21,7 @@ var deployCmd = &cobra.Command{
 config.yml is generated with running subcommand "restore".`,
     Run: func(cmd *cobra.Command, args []string) {
         deploy(args)
+        fmt.Println("Finish deploying!")
     },
 }
 
