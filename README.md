@@ -30,9 +30,9 @@ VSCode docker remote development environment template collections.
    base_shell:
      path: ./services/base_shell
    ```
-2. Run `restore` command giving input and output base `.devcontainer` directory as argument. This command will generate `.devcontainer/seed.yml` from `.devcontainer/skeleton.yml`!
+2. Run `mix` command giving input and output base `.devcontainer` directory as argument. This command will generate merged multiple `.devcontainer/seed.yml`(s) from `.devcontainer/skeleton.yml`!
    ```sh
-   docker-compose run --rm museum restore test_project/.devcontainer
+   docker-compose run --rm museum mix test_project/.devcontainer
    ```
 3. Check generated `.devconainer/seed.yml` out! This is a blue print of `devcontainer.json` & `docker-compose.yml` for VSCode Remote Development for Docker. Fix it at your preference.
 4. Run `deploy` command giving input and output base `.devcontainer` directory as argument. This command will generate canonical `.devcontainer/devcontainer.json` & `.devcontainer/docker-composer.yml` from `.devcontainer/seed.yml`!

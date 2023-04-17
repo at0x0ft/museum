@@ -18,7 +18,7 @@ var deployCmd = &cobra.Command{
     Use:   "deploy",
     Short: "Deploy files from config.yml.",
     Long: `deploy is a subcommand which generate devcontainer.json & docker-compose.yml from config.yml.
-config.yml is generated with running subcommand "restore".`,
+config.yml is generated with running subcommand "mix".`,
     Run: func(cmd *cobra.Command, args []string) {
         deploy(args)
         fmt.Println("Finish deploying!")
