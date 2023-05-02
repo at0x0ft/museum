@@ -14,7 +14,7 @@ services:
       target: dev
     working_dir: /workspace
     volumes:
-      - ./src:/workspace
+      - .:/workspace
 
   museum:
     build:
