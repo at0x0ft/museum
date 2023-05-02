@@ -1,8 +1,8 @@
 version: "3.7"
 
 x-museum_build_config: &museum_build_config
-  context: ./src
-  dockerfile: ../Dockerfile
+  context: .
+  dockerfile: Dockerfile
   args:
     - GO_VERSION=1.19
     - DEBIAN_VERSION=11-slim
