@@ -36,7 +36,7 @@ func Merge(skeleton *schema.Skeleton) (*schema.Seed, error) {
 
 func loadSeeds(skeleton *schema.Skeleton) ([]seedMetadata, error) {
     var result []seedMetadata
-    for _, collection := range skeleton.Collections {
+    for _, collection := range skeleton.Collections.List {
         seed, err := schema.LoadSeed(collection.Path)
         if err != nil {
             return nil, err
