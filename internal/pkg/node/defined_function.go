@@ -1,6 +1,7 @@
 package node
 
 import (
+    "fmt"
     "strconv"
     "gopkg.in/yaml.v3"
 )
@@ -23,4 +24,15 @@ func CreateDefined(path string, node *yaml.Node) *DefinedNode {
 func (self *DefinedNode) Evaluate(variables map[string]string) (string, error) {
     _, ok := variables[self.Value]
     return strconv.FormatBool(ok), nil
+}
+
+func (self *DefinedNode) isRelativeVariablePath() bool {
+    return len(self.Value) > 0 && self.Value[0:1] != "."
+}
+
+func (self *DefinedNode) GetCanonicalValuePath(collectionName string) string {
+    if self.isRelativeVariablePath() {
+        return fmt.Sprintf(".%s.%s", collectionName, self.Value)
+    }
+    return self.Value
 }
