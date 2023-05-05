@@ -74,9 +74,9 @@ func loadSeeds(skeleton *schema.Skeleton) ([]seedMetadata, error) {
     if err != nil {
         return nil, err
     }
-
-    // var attachedServiceSeed *seedMetadata
     result = append(result, *commonSeedMetadata)
+
+    var restSeeds []seedMetadata
     for _, collection := range skeleton.Collections.List {
         seed, err := schema.LoadSeed(collection.Path)
         if err != nil {
@@ -86,8 +86,13 @@ func loadSeeds(skeleton *schema.Skeleton) ([]seedMetadata, error) {
             Name: collection.Name,
             Data: seed,
         }
-        result = append(result, newSeedMetadata)
+        if newSeedMetadata.Name == skeleton.GetCommonAttachServiceName() {
+            result = append(result, newSeedMetadata)
+        } else {
+            restSeeds = append(restSeeds, newSeedMetadata)
+        }
     }
+    result = append(result, restSeeds...)
     return result, nil
 }
 
