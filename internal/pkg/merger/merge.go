@@ -1,5 +1,7 @@
 package merger
 
+// import "fmt"    // 4debug
+// import "github.com/at0x0ft/museum/internal/pkg/debug"   // 4debug
 import (
     "gopkg.in/yaml.v3"
     "github.com/at0x0ft/museum/internal/pkg/schema"
@@ -34,8 +36,47 @@ func Merge(skeleton *schema.Skeleton) (*schema.Seed, error) {
     return mergedSeed, nil
 }
 
+func getCommonVariables(skeleton *schema.Skeleton) (*yaml.Node, error) {
+    argumentsKeyNode, argumentsValueNode, err := skeleton.GetRawArguments()
+    if err != nil {
+        return nil, err
+    }
+
+    variablesNode := createNewMappingNode()
+    variablesNode.Content = append(
+        variablesNode.Content,
+        argumentsKeyNode,
+        argumentsValueNode,
+    )
+    return variablesNode, nil
+}
+
+func getCommonSeedMetadata(skeleton *schema.Skeleton) (*seedMetadata, error) {
+    commonVariables, err := getCommonVariables(skeleton)
+    if err != nil {
+        return nil, err
+    }
+
+    commonSeedData, err := schema.GetCommonSeedData(commonVariables)
+    if err != nil {
+        return nil, err
+    }
+
+    return &seedMetadata{
+        Name: schema.COMMON_COLLECTION_NAME_KEY,
+        Data: commonSeedData,
+    }, nil
+}
+
 func loadSeeds(skeleton *schema.Skeleton) ([]seedMetadata, error) {
     var result []seedMetadata
+    commonSeedMetadata, err := getCommonSeedMetadata(skeleton)
+    if err != nil {
+        return nil, err
+    }
+
+    // var attachedServiceSeed *seedMetadata
+    result = append(result, *commonSeedMetadata)
     for _, collection := range skeleton.Collections.List {
         seed, err := schema.LoadSeed(collection.Path)
         if err != nil {
@@ -49,6 +90,9 @@ func loadSeeds(skeleton *schema.Skeleton) ([]seedMetadata, error) {
     }
     return result, nil
 }
+
+// TODO: refactor here as split
+// func (*seedMetadataList) mergeVariable()
 
 func mergeVariables(seedMetadataList []seedMetadata) (*yaml.Node, error) {
     rootNodePath := ""

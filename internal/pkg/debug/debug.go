@@ -2,6 +2,7 @@ package debug
 
 import (
     "fmt"
+    "bytes"
     "gopkg.in/yaml.v3"
 )
 
@@ -51,4 +52,15 @@ func PrintNode(node *yaml.Node) {
         node.Line,
         node.Column,
     )
+}
+
+func PrintYaml(root interface{}) {
+    var buf bytes.Buffer
+    yamlEncoder := yaml.NewEncoder(&buf)
+    defer yamlEncoder.Close()
+    yamlEncoder.SetIndent(2)
+    yamlEncoder.Encode(root)
+    fmt.Println("[Debug]: given all yaml content is below.")
+    fmt.Println(string(buf.Bytes()))
+    fmt.Println("[Debug]: end yaml content.")
 }

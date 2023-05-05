@@ -1,6 +1,7 @@
 package schema
 
 import (
+    "bytes"
     "fmt"
     "path/filepath"
     "io/ioutil"
@@ -12,7 +13,9 @@ const (
     DockerFileDirectory = "./docker"
 )
 
+// TODO: rename const names.
 const (
+    COMMON_COLLECTION_NAME_KEY = "common"
     ARGUMENTS_KEY = "arguments"
     VSCODE_DEVCONTAINER_KEY = ARGUMENTS_KEY + ".vscode_devcontainer"
     DEVCONTAINER_PROJECT_NAME_KEY = VSCODE_DEVCONTAINER_KEY + ".project_name"
@@ -127,6 +130,34 @@ func (self *Skeleton) getCanonical(baseAbsDir string) (*Skeleton, error) {
     return result, nil
 }
 
+func (self *Skeleton) GetRawArguments() (*yaml.Node, *yaml.Node, error) {
+    var buf bytes.Buffer
+    yamlEncoder := yaml.NewEncoder(&buf)
+    defer yamlEncoder.Close()
+    yamlEncoder.SetIndent(2)
+    yamlEncoder.Encode(&self)
+
+    var data yaml.Node
+    if err := yaml.Unmarshal(buf.Bytes(), &data); err != nil {
+        return nil, nil, err
+    }
+    var keyNode, valueNode *yaml.Node
+    for index := 0; index < len(data.Content[0].Content); index += 2 {
+        if data.Content[0].Content[index].Value == ARGUMENTS_KEY {
+            keyNode = data.Content[0].Content[index]
+            valueNode = data.Content[0].Content[index + 1]
+            break
+        }
+    }
+    if keyNode == nil && valueNode == nil {
+        return nil, nil, fmt.Errorf(
+            "[Error] '%s' is not found in skeleton.yml!",
+            ARGUMENTS_KEY,
+        )
+    }
+    return keyNode, valueNode, nil
+}
+
 func (self *Arguments) validate() error {
     if self.VSCodeDevcontainer.ProjectName == "" {
         return fmt.Errorf(
@@ -210,6 +241,11 @@ func (self *Collections) getCanonical(baseAbsDir string) (*Collections, error) {
 func (self *Collection) validate() error {
     if self.Name == "" && self.Path == "" {
         return fmt.Errorf("[Error] neither 'name' nor 'path' is specified in 'collections.list'!")
+    } else if self.Name == COMMON_COLLECTION_NAME_KEY {
+        return fmt.Errorf(
+            "[Error] collection's 'name' = '%s' is not allowed!",
+            COMMON_COLLECTION_NAME_KEY,
+        )
     }
     return nil
 }

@@ -1,7 +1,10 @@
 package schema
 
+// import "fmt"    // 4debug
+// import "github.com/at0x0ft/museum/internal/pkg/debug"    // 4debug
 import (
     "bytes"
+    _ "embed"
     "path/filepath"
     "io/ioutil"
     "gopkg.in/yaml.v3"
@@ -25,6 +28,9 @@ type Seed struct {
     Configs Configs `yaml:"configs"`
 }
 
+//go:embed seed.common.yml
+var commonSeedRawData []byte
+
 func LoadSeed(dirPath string) (*Seed, error) {
     filePath := filepath.Join(dirPath, SeedFilename)
     buf, err := ioutil.ReadFile(filePath)
@@ -37,6 +43,15 @@ func LoadSeed(dirPath string) (*Seed, error) {
         return nil, err
     }
     return data, nil
+}
+
+func GetCommonSeedData(variables *yaml.Node) (*Seed, error) {
+    var data Seed
+    if err := yaml.Unmarshal(commonSeedRawData, &data); err != nil {
+        return nil, err
+    }
+    data.Variables = *variables
+    return &data, nil
 }
 
 func (self *Seed) WriteToFile(dirPath string) error {
