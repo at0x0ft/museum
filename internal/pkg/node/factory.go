@@ -19,6 +19,8 @@ func TerminalFactory(parentPath string, node *yaml.Node) (Terminal, error) {
         return CreateIf(parentPath, node), nil
     } else if IsEquals(node) {
         return CreateEquals(parentPath, node), nil
+    } else if IsDefined(node) {
+        return CreateDefined(parentPath, node), nil
     }
     return CreateScalar(parentPath, node), nil
 }
