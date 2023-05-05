@@ -22,13 +22,7 @@ type EqualsNode struct {
 func IsEquals(node *yaml.Node) bool {
     isEqualsTaggedSequence := IsSequence(node) && node.Tag == EqualsNodeTag
     hasTwoChildNodes := len(node.Content) == 2
-    if !(isEqualsTaggedSequence && hasTwoChildNodes) {
-        return false
-    }
-
-    leftVariableNode := node.Content[0]
-    rightVariableNode := node.Content[1]
-    return IsTerminal(leftVariableNode) && IsTerminal(rightVariableNode)
+    return isEqualsTaggedSequence && hasTwoChildNodes
 }
 
 func CreateEquals(parentPath string, node *yaml.Node) *EqualsNode {
@@ -49,7 +43,7 @@ func CreateEquals(parentPath string, node *yaml.Node) *EqualsNode {
 }
 
 func (self *EqualsNode) Evaluate(variables map[string]string) (string, error) {
-    leftVariableNode, err := TerminalFactory(self.leftVariable.Path, &self.leftVariable.Node)
+    leftVariableNode, err := EvaluatableFactory(self.leftVariable.Path, &self.leftVariable.Node)
     if err != nil {
         return "", err
     }
@@ -58,7 +52,7 @@ func (self *EqualsNode) Evaluate(variables map[string]string) (string, error) {
         return "", err
     }
 
-    rightVariableNode, err := TerminalFactory(self.rightVariable.Path, &self.rightVariable.Node)
+    rightVariableNode, err := EvaluatableFactory(self.rightVariable.Path, &self.rightVariable.Node)
     if err != nil {
         return "", err
     }

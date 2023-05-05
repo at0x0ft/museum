@@ -11,8 +11,8 @@ type sequenceNode struct {
 }
 
 func (self *sequenceNode) visit(variables map[string]string) (*yaml.Node, error) {
-    if node.IsTerminal(&self.Node) {
-        t, err := node.TerminalFactory(self.Path, &self.Node)
+    if node.IsEvaluatable(&self.Node) {
+        t, err := node.EvaluatableFactory(self.Path, &self.Node)
         if err != nil {
             return nil, err
         }

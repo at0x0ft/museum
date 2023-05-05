@@ -11,7 +11,7 @@ type scalarNode struct {
 
 func (self *scalarNode) visit(variables map[string]string) (map[string]string, error) {
     // fmt.Printf("scalar\n")  // 4debug
-    t, err := node.TerminalFactory(self.Path, &self.Node)
+    t, err := node.EvaluatableFactory(self.Path, &self.Node)
     if err != nil {
         return nil, err
     }

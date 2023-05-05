@@ -13,7 +13,7 @@ type VariableNode struct {
 }
 
 func IsVariable(node *yaml.Node) bool {
-    return (node.Kind & yaml.ScalarNode) != 0 && (node.Style & yaml.TaggedStyle) != 0 && node.Tag == VariableNodeTag
+    return IsScalar(node) && (node.Style & yaml.TaggedStyle) != 0 && node.Tag == VariableNodeTag
 }
 
 func CreateVariable(path string, node *yaml.Node) *VariableNode {

@@ -33,14 +33,7 @@ type IfNode struct {
 func IsIf(node *yaml.Node) bool {
     isIfTaggedSequence := IsSequence(node) && node.Tag == IfNodeTag
     hasThreeChildNodes := len(node.Content) == 3
-    if !(isIfTaggedSequence && hasThreeChildNodes) {
-        return false
-    }
-
-    predicateNode := node.Content[0]
-    trueExpressionNode := node.Content[1]
-    falseExpressionNode := node.Content[2]
-    return IsTerminal(predicateNode) && IsTerminal(trueExpressionNode) && IsTerminal(falseExpressionNode)
+    return isIfTaggedSequence && hasThreeChildNodes
 }
 
 func CreateIf(path string, node *yaml.Node) *IfNode {
@@ -67,7 +60,7 @@ func CreateIf(path string, node *yaml.Node) *IfNode {
 }
 
 func (self *IfNode) Evaluate(variables map[string]string) (string, error) {
-    predicateNode, err := TerminalFactory(self.predicate.Path, self.predicate.rawNode)
+    predicateNode, err := EvaluatableFactory(self.predicate.Path, self.predicate.rawNode)
     if err != nil {
         return "", err
     }
@@ -77,7 +70,7 @@ func (self *IfNode) Evaluate(variables map[string]string) (string, error) {
     }
 
     if predicate == strconv.FormatBool(true) {
-        trueExpressionNode, err := TerminalFactory(self.trueExpression.Path, self.trueExpression.rawNode)
+        trueExpressionNode, err := EvaluatableFactory(self.trueExpression.Path, self.trueExpression.rawNode)
         if err != nil {
             return "", err
         }
@@ -88,7 +81,7 @@ func (self *IfNode) Evaluate(variables map[string]string) (string, error) {
         return trueExpression, nil
     }
 
-    falseExpressionNode, err := TerminalFactory(self.falseExpression.Path, self.falseExpression.rawNode)
+    falseExpressionNode, err := EvaluatableFactory(self.falseExpression.Path, self.falseExpression.rawNode)
     if err != nil {
         return "", err
     }

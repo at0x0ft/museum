@@ -5,8 +5,8 @@ import (
     "gopkg.in/yaml.v3"
 )
 
-func TerminalFactory(parentPath string, node *yaml.Node) (Terminal, error) {
-    if !IsTerminal(node) {
+func EvaluatableFactory(parentPath string, node *yaml.Node) (Evaluatable, error) {
+    if !IsEvaluatable(node) {
         return nil, fmt.Errorf("Not terminal Node!\nKind = %v, Tag = %v\n", node.Kind, node.Tag)
     }
     if IsNullableVariable(node) {

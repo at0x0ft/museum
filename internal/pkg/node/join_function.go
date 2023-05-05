@@ -31,10 +31,8 @@ func IsJoin(node *yaml.Node) bool {
         return false
     }
 
-    delimiterNode := node.Content[0]
     valuesNode := node.Content[1]
-    // fmt.Printf("fst = %v, snd = %v, trd = %v\n", IsTerminal(delimiterNode), IsSequence(valuesNode), sequenceHasTerminals(valuesNode))   // 4debug
-    return IsTerminal(delimiterNode) && IsSequence(valuesNode) && sequenceHasTerminals(valuesNode)
+    return IsSequence(valuesNode)
 }
 
 func CreateJoin(path string, node *yaml.Node) *JoinNode {
@@ -64,7 +62,7 @@ func CreateJoin(path string, node *yaml.Node) *JoinNode {
 }
 
 func (self *JoinNode) Evaluate(variables map[string]string) (string, error) {
-    delimiterNode, err := TerminalFactory(self.delimiter.Path, self.delimiter.rawNode)
+    delimiterNode, err := EvaluatableFactory(self.delimiter.Path, self.delimiter.rawNode)
     if err != nil {
         return "", err
     }
@@ -75,7 +73,7 @@ func (self *JoinNode) Evaluate(variables map[string]string) (string, error) {
 
     var values []string
     for _, value := range self.values {
-        valueNode, err := TerminalFactory(value.Path, value.rawNode)
+        valueNode, err := EvaluatableFactory(value.Path, value.rawNode)
         if err != nil {
             return "", err
         }
