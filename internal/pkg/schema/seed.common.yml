@@ -3,11 +3,11 @@ version: "0"
 
 configs:
   vscode_devcontainer:
-    name: !Var arguments.devcontainer.project_name
+    name: !Var arguments.vscode_devcontainer.project_name
     dockerComposeFile: !Var arguments.docker_compose.files
-    service: !Var arguments.docker_compose.files
+    service: !Var arguments.vscode_devcontainer.attach_service
   docker_compose:
     version: "3.7"
     volumes:
-      !Var arguments.docker_compose.volume_name.vscode_extension_volumes.normal:
-      !Var arguments.docker_compose.volume_name.vscode_extension_volumes.insider:
+      !Var arguments.docker_compose.vscode_extension_volumes.normal:
+      !Var arguments.docker_compose.vscode_extension_volumes.insider:
