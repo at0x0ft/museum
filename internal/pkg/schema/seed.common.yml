@@ -9,5 +9,5 @@ configs:
   docker_compose:
     version: "3.7"
     volumes:
-      !Var arguments.docker_compose.vscode_extension_volumes.normal:
-      !Var arguments.docker_compose.vscode_extension_volumes.insider:
+      !Var? arguments.docker_compose.vscode_extension_volumes.normal:
+      !Var? arguments.docker_compose.vscode_extension_volumes.insider:
