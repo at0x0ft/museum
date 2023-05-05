@@ -89,7 +89,7 @@ func (self *Skeleton) attachedServiceExists() bool {
     for _, collection := range self.Collections.List {
         serviceNameSet[collection.Name] = struct{}{}
     }
-    _, ok := serviceNameSet[self.GetCommonAttachServiceName()]
+    _, ok := serviceNameSet[self.GetCommonAttachedCollectionName()]
     return ok
 }
 
@@ -98,7 +98,7 @@ func (self *Skeleton) validate() error {
         return fmt.Errorf(
             "[Error] '%s' specified value (= '%s') collection is not found!",
             DEVCONTAINER_ATTACH_SERVICE_KEY,
-            self.GetCommonAttachServiceName(),
+            self.GetCommonAttachedCollectionName(),
         )
     }
     return nil
@@ -158,7 +158,7 @@ func (self *Skeleton) GetRawArguments() (*yaml.Node, *yaml.Node, error) {
     return keyNode, valueNode, nil
 }
 
-func (self *Skeleton) GetCommonAttachServiceName() string {
+func (self *Skeleton) GetCommonAttachedCollectionName() string {
     return self.Arguments.VSCodeDevcontainer.AttachService
 }
 

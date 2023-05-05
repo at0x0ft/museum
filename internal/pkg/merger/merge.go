@@ -86,7 +86,7 @@ func loadSeeds(skeleton *schema.Skeleton) ([]seedMetadata, error) {
             Name: collection.Name,
             Data: seed,
         }
-        if newSeedMetadata.Name == skeleton.GetCommonAttachServiceName() {
+        if newSeedMetadata.Name == skeleton.GetCommonAttachedCollectionName() {
             result = append(result, newSeedMetadata)
         } else {
             restSeeds = append(restSeeds, newSeedMetadata)
