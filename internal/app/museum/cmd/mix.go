@@ -53,10 +53,6 @@ func mix(args []string) {
         fmt.Println(err)
         os.Exit(1)
     }
-    if !needToMerge(skeleton) {
-        fmt.Println("[Warn] Cannot merge collections since not any collection is given. Exit.")
-        return
-    }
 
     if err := mergeSeeds(skeleton, dstRootDir); err != nil {
         fmt.Println(err)
@@ -67,10 +63,6 @@ func mix(args []string) {
         fmt.Println(err)
         os.Exit(1)
     }
-}
-
-func needToMerge(skeleton *schema.Skeleton) bool {
-    return !skeleton.HasEmptyCollection()
 }
 
 func mergeSeeds(skeleton *schema.Skeleton, dstRootDir string) error {
@@ -91,7 +83,7 @@ func copyDockerFiles(skeleton *schema.Skeleton, dstRootDir string) error {
         return err
     }
 
-    for _, collection := range skeleton.Collections {
+    for _, collection := range skeleton.Collections.List {
         srcDir := filepath.Join(collection.Path, schema.DockerFileDirectory)
         dstDir := filepath.Join(dstDirname, collection.Name)
         if err := exec.Command("cp", "-r", srcDir, dstDir).Run(); err != nil {

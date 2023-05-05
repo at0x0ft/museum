@@ -1,5 +1,7 @@
 package merger
 
+// import "fmt"    // 4debug
+// import "github.com/at0x0ft/museum/internal/pkg/debug"   // 4debug
 import (
     "gopkg.in/yaml.v3"
     "github.com/at0x0ft/museum/internal/pkg/schema"
@@ -34,9 +36,48 @@ func Merge(skeleton *schema.Skeleton) (*schema.Seed, error) {
     return mergedSeed, nil
 }
 
+func getCommonVariables(skeleton *schema.Skeleton) (*yaml.Node, error) {
+    argumentsKeyNode, argumentsValueNode, err := skeleton.GetRawArguments()
+    if err != nil {
+        return nil, err
+    }
+
+    variablesNode := createNewMappingNode()
+    variablesNode.Content = append(
+        variablesNode.Content,
+        argumentsKeyNode,
+        argumentsValueNode,
+    )
+    return variablesNode, nil
+}
+
+func getCommonSeedMetadata(skeleton *schema.Skeleton) (*seedMetadata, error) {
+    commonVariables, err := getCommonVariables(skeleton)
+    if err != nil {
+        return nil, err
+    }
+
+    commonSeedData, err := schema.GetCommonSeedData(commonVariables)
+    if err != nil {
+        return nil, err
+    }
+
+    return &seedMetadata{
+        Name: schema.COMMON_COLLECTION_NAME_KEY,
+        Data: commonSeedData,
+    }, nil
+}
+
 func loadSeeds(skeleton *schema.Skeleton) ([]seedMetadata, error) {
     var result []seedMetadata
-    for _, collection := range skeleton.Collections {
+    commonSeedMetadata, err := getCommonSeedMetadata(skeleton)
+    if err != nil {
+        return nil, err
+    }
+    result = append(result, *commonSeedMetadata)
+
+    var restSeeds []seedMetadata
+    for _, collection := range skeleton.Collections.List {
         seed, err := schema.LoadSeed(collection.Path)
         if err != nil {
             return nil, err
@@ -45,9 +86,38 @@ func loadSeeds(skeleton *schema.Skeleton) ([]seedMetadata, error) {
             Name: collection.Name,
             Data: seed,
         }
-        result = append(result, newSeedMetadata)
+        if newSeedMetadata.Name == skeleton.GetCommonAttachedCollectionName() {
+            result = append(result, newSeedMetadata)
+        } else {
+            restSeeds = append(restSeeds, newSeedMetadata)
+        }
     }
+    result = append(result, restSeeds...)
     return result, nil
+}
+
+func appendTree(appendedNodes map[string]visitable, collectionName string, root *yaml.Node) (map[string]visitable, error) {
+    r, err := visitableFactory("", root)
+    if err != nil {
+        return nil, err
+    }
+    _, err = r.visit(appendedNodes, collectionName)
+    return appendedNodes, err
+}
+
+func (self *seedMetadata) getCollectionNameAddedVariables() *yaml.Node {
+    root := createNewMappingNode()
+    keyNode := &yaml.Node{
+        Kind: yaml.ScalarNode,
+        Tag: "!!str",
+        Value: self.Name,
+    }
+    root.Content = append(
+        root.Content,
+        keyNode,
+        &self.Data.Variables,
+    )
+    return root
 }
 
 func mergeVariables(seedMetadataList []seedMetadata) (*yaml.Node, error) {
@@ -55,21 +125,11 @@ func mergeVariables(seedMetadataList []seedMetadata) (*yaml.Node, error) {
     appendedNodes := make(map[string]visitable)
     var err error
     for _, seedMetadata := range seedMetadataList {
-        newRoot := createNewMappingNode()
-        keyNode := &yaml.Node{
-            Kind: yaml.ScalarNode,
-            Tag: "!!str",
-            Value: seedMetadata.Name,
-        }
-        newRoot.Content = append(
-            newRoot.Content,
-            keyNode,
-            &seedMetadata.Data.Variables,
-        )
+        variables := seedMetadata.getCollectionNameAddedVariables()
         appendedNodes, err = appendTree(
             appendedNodes,
-            newRoot,
             seedMetadata.Name,
+            variables,
         );
         if err != nil {
             return nil, err
@@ -110,8 +170,8 @@ func mergeDevcontainerConfigs(seedMetadataList []seedMetadata) (*yaml.Node, erro
     for _, seedMetadata := range seedMetadataList {
         appendedConfigs, err = appendTree(
             appendedConfigs,
-            &seedMetadata.Data.Configs.VSCodeDevcontainer,
             seedMetadata.Name,
+            &seedMetadata.Data.Configs.VSCodeDevcontainer,
         )
         if err != nil {
             return nil, err
@@ -127,21 +187,12 @@ func mergeDockerComposes(seedMetadataList []seedMetadata) (*yaml.Node, error) {
     for _, seedMetadata := range seedMetadataList {
         appendedConfigs, err = appendTree(
             appendedConfigs,
-            &seedMetadata.Data.Configs.DockerCompose,
             seedMetadata.Name,
+            &seedMetadata.Data.Configs.DockerCompose,
         )
         if err != nil {
             return nil, err
         }
     }
     return appendedConfigs[rootNodePath].getRaw(), nil
-}
-
-func appendTree(appendedNodes map[string]visitable, root *yaml.Node, collectionName string) (map[string]visitable, error) {
-    r, err := visitableFactory("", root)
-    if err != nil {
-        return nil, err
-    }
-    _, err = r.visit(appendedNodes, collectionName)
-    return appendedNodes, err
 }
