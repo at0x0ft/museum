@@ -62,42 +62,62 @@ func CreateSubstitution(path string, node *yaml.Node) *SubstitutionNode {
     return &SubstitutionNode{path, templateExpression, variableMappings}
 }
 
-func (self *SubstitutionNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
-    varMap := make(map[string]string)
-    for _, variableMapping := range self.variableMappings {
-        variableKeyNode, err := EvaluatableFactory(variableMapping.Path, variableMapping.rawKeyNode)
-        if err != nil {
-            return nil, err
-        }
-        variableKey, err := variableKeyNode.Evaluate(variables)
-        if err != nil {
-            return nil, err
-        }
-
-        variableValueNode, err := EvaluatableFactory(variableMapping.Path, variableMapping.rawValueNode)
-        if err != nil {
-            return nil, err
-        }
-        variableValue, err := variableValueNode.Evaluate(variables)
-        if err != nil {
-            return nil, err
-        }
-        varMap[variableKey.Value] = variableValue.Value
-        // fmt.Printf("variableMapping[%v] = %v\n", variableKey.Value, variableValue.Value)    // 4debug
+func (self *SubstitutionNode) evaluateIfCan(
+    path string,
+    node *yaml.Node,
+    variables map[string]*yaml.Node,
+) (*yaml.Node, error) {
+    if !IsEvaluatable(node) {
+        return node, nil
     }
 
-    templateExpressionNode, err := EvaluatableFactory(self.templateExpression.Path, self.templateExpression.rawNode)
+    evaluatableNode, err := EvaluatableFactory(path, node)
     if err != nil {
         return nil, err
     }
-    templateExpression, err := templateExpressionNode.Evaluate(variables)
+    evaluatedRawNode, err := evaluatableNode.Evaluate(variables)
+    if err != nil {
+        return nil, err
+    }
+    return evaluatedRawNode, nil
+}
+
+func (self *SubstitutionNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
+    varMap := make(map[string]string)
+    for _, variableMapping := range self.variableMappings {
+        variableKeyNode, err := self.evaluateIfCan(
+            variableMapping.Path,
+            variableMapping.rawKeyNode,
+            variables,
+        )
+        if err != nil {
+            return nil, err
+        }
+
+        variableValueNode, err := self.evaluateIfCan(
+            variableMapping.Path,
+            variableMapping.rawValueNode,
+            variables,
+        )
+        if err != nil {
+            return nil, err
+        }
+        varMap[variableKeyNode.Value] = variableValueNode.Value
+        // fmt.Printf("variableMapping[%v] = %v\n", variableKey.Value, variableValue.Value)    // 4debug
+    }
+
+    templateExpressionNode, err := self.evaluateIfCan(
+        self.templateExpression.Path,
+        self.templateExpression.rawNode,
+        variables,
+    )
     if err != nil {
         return nil, err
     }
     variableMapper := func(varName string) string {
         return varMap[varName]
     }
-    evaluatedExpression := os.Expand(templateExpression.Value, variableMapper)
+    evaluatedExpression := os.Expand(templateExpressionNode.Value, variableMapper)
     // fmt.Printf("!Sub result = %v\n", evaluatedExpression)   // 4debug
 
     return createRawScalarNode(evaluatedExpression), nil

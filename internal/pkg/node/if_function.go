@@ -58,45 +58,53 @@ func CreateIf(path string, node *yaml.Node) *IfNode {
     return &IfNode{path, predicateNode, trueExpressionNode, falseExpressionNode}
 }
 
-func (self *IfNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
-    predicateNode, err := EvaluatableFactory(self.predicate.Path, self.predicate.rawNode)
+func (self *IfNode) evaluateIfCan(
+    path string,
+    node *yaml.Node,
+    variables map[string]*yaml.Node,
+) (*yaml.Node, error) {
+    if !IsEvaluatable(node) {
+        return node, nil
+    }
+
+    evaluatableNode, err := EvaluatableFactory(path, node)
     if err != nil {
         return nil, err
     }
-    evaluatedPredicate, err := predicateNode.Evaluate(variables)
+    evaluatedRawNode, err := evaluatableNode.Evaluate(variables)
+    if err != nil {
+        return nil, err
+    }
+    return evaluatedRawNode, nil
+}
+
+func (self *IfNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
+    predicateNode, err := self.evaluateIfCan(
+        self.predicate.Path,
+        self.predicate.rawNode,
+        variables,
+    )
     if err != nil {
         return nil, err
     }
 
-    if IsTrue(evaluatedPredicate) {
-        if !IsEvaluatable(self.trueExpression.rawNode) {
-            return self.trueExpression.rawNode, nil
-        }
-        trueExpressionNode, err := EvaluatableFactory(
+    if IsTrue(predicateNode) {
+        trueExpression, err := self.evaluateIfCan(
             self.trueExpression.Path,
             self.trueExpression.rawNode,
+            variables,
         )
-        if err != nil {
-            return nil, err
-        }
-        trueExpression, err := trueExpressionNode.Evaluate(variables)
         if err != nil {
             return nil, err
         }
         return trueExpression, nil
     }
 
-    if !IsEvaluatable(self.falseExpression.rawNode) {
-        return self.falseExpression.rawNode, nil
-    }
-    falseExpressionNode, err := EvaluatableFactory(
+    falseExpression, err := self.evaluateIfCan(
         self.falseExpression.Path,
         self.falseExpression.rawNode,
+        variables,
     )
-    if err != nil {
-        return nil, err
-    }
-    falseExpression, err := falseExpressionNode.Evaluate(variables)
     if err != nil {
         return nil, err
     }

@@ -8,5 +8,5 @@ type Evaluatable interface {
 
 func IsEvaluatable(node *yaml.Node) bool {
     return IsNullableVariable(node) || IsVariable(node) || IsSubstitution(node) || IsJoin(node) ||
-        IsIf(node) || IsEquals(node) || IsDefined(node) || IsScalar(node)
+        IsIf(node) || IsEquals(node) || IsDefined(node)
 }

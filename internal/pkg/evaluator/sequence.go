@@ -16,11 +16,19 @@ func (self *sequenceNode) visit(variables map[string]*yaml.Node) (*yaml.Node, er
         if err != nil {
             return nil, err
         }
-        value, err := t.Evaluate(variables)
+        evaluatedRawNode, err := t.Evaluate(variables)
         if err != nil {
             return nil, err
         }
-        return self.createEvaluatedScalar(value.Value), nil
+
+        if evaluatedRawNode != &self.Node {
+            evaluatedNode, err := visitableFactory(self.Path, evaluatedRawNode)
+            if err != nil {
+                return nil, err
+            }
+            return evaluatedNode.visit(variables)
+        }
+        return evaluatedRawNode, nil
     }
 
     newChildNodes, err := self.visitChildren(variables)

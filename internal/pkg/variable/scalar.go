@@ -12,14 +12,19 @@ type scalarNode struct {
 
 func (self *scalarNode) visit(variables map[string]*yaml.Node) (map[string]*yaml.Node, error) {
     // fmt.Printf("scalar\n")  // 4debug
-    t, err := node.EvaluatableFactory(self.Path, &self.Node)
-    if err != nil {
-        return nil, err
+    var rawNode *yaml.Node
+    if node.IsEvaluatable(&self.Node) {
+        t, err := node.EvaluatableFactory(self.Path, &self.Node)
+        if err != nil {
+            return nil, err
+        }
+        rawNode, err = t.Evaluate(variables)
+        if err != nil {
+            return nil, err
+        }
+    } else {
+        rawNode = &self.Node
     }
-    value, err := t.Evaluate(variables)
-    if err != nil {
-        return nil, err
-    }
-    variables[self.Path] = value
+    variables[self.Path] = rawNode
     return variables, nil
 }

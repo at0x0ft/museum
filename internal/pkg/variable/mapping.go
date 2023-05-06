@@ -15,7 +15,13 @@ type mappingElement struct {
 }
 
 func (self *mappingNode) visit(variables map[string]*yaml.Node) (map[string]*yaml.Node, error) {
-    return self.visitChildren(variables)
+    var err error
+    variables, err = self.visitChildren(variables)
+    if err != nil {
+        return nil, err
+    }
+    variables[self.Path] = &self.Node
+    return variables, nil
 }
 
 func (self *mappingNode) visitChildren(variables map[string]*yaml.Node) (map[string]*yaml.Node, error) {
@@ -35,7 +41,10 @@ func (self *mappingNode) visitChildren(variables map[string]*yaml.Node) (map[str
 }
 
 func (self *mappingElement) visitKey(variables map[string]*yaml.Node) (map[string]*yaml.Node, error) {
-    node, err := visitableFactory(self.Path, self.KeyNode)
+    // TODO: refine keyPostfix as unique
+    // e.g. previous value has "|" character
+    keyPostFix := "|key|."
+    node, err := visitableFactory(self.Path + keyPostFix, self.KeyNode)
     if err != nil {
         return nil, err
     }
