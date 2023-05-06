@@ -10,7 +10,7 @@ type sequenceNode struct {
     node.SequenceNode
 }
 
-func (self *sequenceNode) visit(variables map[string]string) (*yaml.Node, error) {
+func (self *sequenceNode) visit(variables map[string]*yaml.Node) (*yaml.Node, error) {
     if node.IsEvaluatable(&self.Node) {
         t, err := node.EvaluatableFactory(self.Path, &self.Node)
         if err != nil {
@@ -20,7 +20,7 @@ func (self *sequenceNode) visit(variables map[string]string) (*yaml.Node, error)
         if err != nil {
             return nil, err
         }
-        return self.createEvaluatedScalar(value), nil
+        return self.createEvaluatedScalar(value.Value), nil
     }
 
     newChildNodes, err := self.visitChildren(variables)
@@ -30,7 +30,7 @@ func (self *sequenceNode) visit(variables map[string]string) (*yaml.Node, error)
     return self.createNew(newChildNodes), nil
 }
 
-func (self *sequenceNode) visitChildren(variables map[string]string) ([]*yaml.Node, error) {
+func (self *sequenceNode) visitChildren(variables map[string]*yaml.Node) ([]*yaml.Node, error) {
     var newChildNodes []*yaml.Node
     for index, childRawNode := range self.Content {
         suffix := fmt.Sprintf("[%d]", index)

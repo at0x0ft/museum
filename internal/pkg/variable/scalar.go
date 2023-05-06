@@ -2,6 +2,7 @@ package variable
 
 // import "fmt"   // 4debug
 import (
+    "gopkg.in/yaml.v3"
     "github.com/at0x0ft/museum/internal/pkg/node"
 )
 
@@ -9,7 +10,7 @@ type scalarNode struct {
     node.ScalarNode
 }
 
-func (self *scalarNode) visit(variables map[string]string) (map[string]string, error) {
+func (self *scalarNode) visit(variables map[string]*yaml.Node) (map[string]*yaml.Node, error) {
     // fmt.Printf("scalar\n")  // 4debug
     t, err := node.EvaluatableFactory(self.Path, &self.Node)
     if err != nil {

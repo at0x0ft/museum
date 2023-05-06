@@ -10,7 +10,7 @@ type scalarNode struct {
     node.ScalarNode
 }
 
-func (self *scalarNode) visit(variables map[string]string) (*yaml.Node, error) {
+func (self *scalarNode) visit(variables map[string]*yaml.Node) (*yaml.Node, error) {
     // fmt.Printf("scalar\n")  // 4debug
     t, err := node.EvaluatableFactory(self.Path, &self.Node)
     if err != nil {
@@ -20,7 +20,7 @@ func (self *scalarNode) visit(variables map[string]string) (*yaml.Node, error) {
     if err != nil {
         return nil, err
     }
-    return self.createNew(value), nil
+    return self.createNew(value.Value), nil
 }
 
 func (self *scalarNode) createNew(value string) *yaml.Node {

@@ -2,7 +2,6 @@ package node
 
 import (
     "fmt"
-    "strconv"
     "gopkg.in/yaml.v3"
 )
 
@@ -59,35 +58,47 @@ func CreateIf(path string, node *yaml.Node) *IfNode {
     return &IfNode{path, predicateNode, trueExpressionNode, falseExpressionNode}
 }
 
-func (self *IfNode) Evaluate(variables map[string]string) (string, error) {
+func (self *IfNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
     predicateNode, err := EvaluatableFactory(self.predicate.Path, self.predicate.rawNode)
     if err != nil {
-        return "", err
+        return nil, err
     }
-    predicate, err := predicateNode.Evaluate(variables)
+    evaluatedPredicate, err := predicateNode.Evaluate(variables)
     if err != nil {
-        return "", err
+        return nil, err
     }
 
-    if predicate == strconv.FormatBool(true) {
-        trueExpressionNode, err := EvaluatableFactory(self.trueExpression.Path, self.trueExpression.rawNode)
+    if IsTrue(evaluatedPredicate) {
+        if !IsEvaluatable(self.trueExpression.rawNode) {
+            return self.trueExpression.rawNode, nil
+        }
+        trueExpressionNode, err := EvaluatableFactory(
+            self.trueExpression.Path,
+            self.trueExpression.rawNode,
+        )
         if err != nil {
-            return "", err
+            return nil, err
         }
         trueExpression, err := trueExpressionNode.Evaluate(variables)
         if err != nil {
-            return "", err
+            return nil, err
         }
         return trueExpression, nil
     }
 
-    falseExpressionNode, err := EvaluatableFactory(self.falseExpression.Path, self.falseExpression.rawNode)
+    if !IsEvaluatable(self.falseExpression.rawNode) {
+        return self.falseExpression.rawNode, nil
+    }
+    falseExpressionNode, err := EvaluatableFactory(
+        self.falseExpression.Path,
+        self.falseExpression.rawNode,
+    )
     if err != nil {
-        return "", err
+        return nil, err
     }
     falseExpression, err := falseExpressionNode.Evaluate(variables)
     if err != nil {
-        return "", err
+        return nil, err
     }
     return falseExpression, nil
 }

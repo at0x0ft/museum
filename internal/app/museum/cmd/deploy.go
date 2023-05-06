@@ -7,6 +7,7 @@ package cmd
 import (
     "fmt"
     "os"
+    "gopkg.in/yaml.v3"
     "github.com/spf13/cobra"
     "github.com/at0x0ft/museum/internal/pkg/evaluator"
     "github.com/at0x0ft/museum/internal/pkg/variable"
@@ -70,7 +71,7 @@ func deploy(args []string) {
     }
 }
 
-func evaluateSeed(seed *schema.Seed, variables map[string]string) (*schema.Seed, error) {
+func evaluateSeed(seed *schema.Seed, variables map[string]*yaml.Node) (*schema.Seed, error) {
     configs := &seed.Configs
     evaluatedDevcontainer, err := evaluator.Evaluate(&configs.VSCodeDevcontainer, variables)
     if err != nil {

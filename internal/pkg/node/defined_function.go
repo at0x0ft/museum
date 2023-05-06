@@ -2,7 +2,6 @@ package node
 
 import (
     "fmt"
-    "strconv"
     "gopkg.in/yaml.v3"
 )
 
@@ -21,9 +20,11 @@ func CreateDefined(path string, node *yaml.Node) *DefinedNode {
     return &DefinedNode{path, *node}
 }
 
-func (self *DefinedNode) Evaluate(variables map[string]string) (string, error) {
-    _, ok := variables[self.Value]
-    return strconv.FormatBool(ok), nil
+func (self *DefinedNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
+    if _, ok := variables[self.Value]; ok {
+        return createRawTrueNode(), nil
+    }
+    return createRawFalseNode(), nil
 }
 
 func (self *DefinedNode) isRelativeVariablePath() bool {

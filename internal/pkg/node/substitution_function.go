@@ -62,43 +62,43 @@ func CreateSubstitution(path string, node *yaml.Node) *SubstitutionNode {
     return &SubstitutionNode{path, templateExpression, variableMappings}
 }
 
-func (self *SubstitutionNode) Evaluate(variables map[string]string) (string, error) {
+func (self *SubstitutionNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
     varMap := make(map[string]string)
     for _, variableMapping := range self.variableMappings {
         variableKeyNode, err := EvaluatableFactory(variableMapping.Path, variableMapping.rawKeyNode)
         if err != nil {
-            return "", err
+            return nil, err
         }
         variableKey, err := variableKeyNode.Evaluate(variables)
         if err != nil {
-            return "", err
+            return nil, err
         }
 
         variableValueNode, err := EvaluatableFactory(variableMapping.Path, variableMapping.rawValueNode)
         if err != nil {
-            return "", err
+            return nil, err
         }
         variableValue, err := variableValueNode.Evaluate(variables)
         if err != nil {
-            return "", err
+            return nil, err
         }
-        varMap[variableKey] = variableValue
-        // fmt.Printf("variableMapping[%v] = %v\n", variableKey, variableValue)    // 4debug
+        varMap[variableKey.Value] = variableValue.Value
+        // fmt.Printf("variableMapping[%v] = %v\n", variableKey.Value, variableValue.Value)    // 4debug
     }
 
     templateExpressionNode, err := EvaluatableFactory(self.templateExpression.Path, self.templateExpression.rawNode)
     if err != nil {
-        return "", err
+        return nil, err
     }
     templateExpression, err := templateExpressionNode.Evaluate(variables)
     if err != nil {
-        return "", err
+        return nil, err
     }
     variableMapper := func(varName string) string {
         return varMap[varName]
     }
-    evaluatedExpression := os.Expand(templateExpression, variableMapper)
+    evaluatedExpression := os.Expand(templateExpression.Value, variableMapper)
     // fmt.Printf("!Sub result = %v\n", evaluatedExpression)   // 4debug
 
-    return evaluatedExpression, nil
+    return createRawScalarNode(evaluatedExpression), nil
 }

@@ -1,7 +1,6 @@
 package node
 
 import (
-    "strconv"
     "fmt"
     "gopkg.in/yaml.v3"
 )
@@ -42,24 +41,27 @@ func CreateEquals(parentPath string, node *yaml.Node) *EqualsNode {
     return &EqualsNode{Path: parentPath, leftVariable: leftVariable, rightVariable: rightVariable}
 }
 
-func (self *EqualsNode) Evaluate(variables map[string]string) (string, error) {
+func (self *EqualsNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
     leftVariableNode, err := EvaluatableFactory(self.leftVariable.Path, &self.leftVariable.Node)
     if err != nil {
-        return "", err
+        return nil, err
     }
     leftVariable, err := leftVariableNode.Evaluate(variables)
     if err != nil {
-        return "", err
+        return nil, err
     }
 
     rightVariableNode, err := EvaluatableFactory(self.rightVariable.Path, &self.rightVariable.Node)
     if err != nil {
-        return "", err
+        return nil, err
     }
     rightVariable, err := rightVariableNode.Evaluate(variables)
     if err != nil {
-        return "", err
+        return nil, err
     }
 
-    return strconv.FormatBool(leftVariable == rightVariable), nil
+    if leftVariable == rightVariable {
+        return createRawTrueNode(), nil
+    }
+    return createRawFalseNode(), nil
 }

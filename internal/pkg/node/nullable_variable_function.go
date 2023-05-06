@@ -20,11 +20,11 @@ func CreateNullableVariable(path string, node *yaml.Node) *NullableVariableNode 
     return &NullableVariableNode{path, *node}
 }
 
-func (self *NullableVariableNode) Evaluate(variables map[string]string) (string, error) {
+func (self *NullableVariableNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
     if result, ok := variables[self.Value]; ok {
         return result, nil
     }
-    return "null", nil
+    return createRawNullNode(), nil
 }
 
 func (self *NullableVariableNode) isRelativeVariablePath() bool {

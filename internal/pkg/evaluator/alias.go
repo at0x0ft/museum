@@ -10,7 +10,7 @@ type aliasNode struct {
     node.AliasNode
 }
 
-func (self *aliasNode) visit(variables map[string]string) (*yaml.Node, error) {
+func (self *aliasNode) visit(variables map[string]*yaml.Node) (*yaml.Node, error) {
     return self.createNew(), nil
 }
 

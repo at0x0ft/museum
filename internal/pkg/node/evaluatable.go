@@ -3,7 +3,7 @@ package node
 import "gopkg.in/yaml.v3"
 
 type Evaluatable interface {
-    Evaluate(variables map[string]string) (string, error)
+    Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error)
 }
 
 func IsEvaluatable(node *yaml.Node) bool {

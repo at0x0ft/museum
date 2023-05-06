@@ -61,27 +61,27 @@ func CreateJoin(path string, node *yaml.Node) *JoinNode {
     return &JoinNode{path, delimiter, values}
 }
 
-func (self *JoinNode) Evaluate(variables map[string]string) (string, error) {
+func (self *JoinNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
     delimiterNode, err := EvaluatableFactory(self.delimiter.Path, self.delimiter.rawNode)
     if err != nil {
-        return "", err
+        return nil, err
     }
     delimiter, err := delimiterNode.Evaluate(variables)
     if err != nil {
-        return "", err
+        return nil, err
     }
 
     var values []string
     for _, value := range self.values {
         valueNode, err := EvaluatableFactory(value.Path, value.rawNode)
         if err != nil {
-            return "", err
+            return nil, err
         }
-        value, err := valueNode.Evaluate(variables)
+        valueRawNode, err := valueNode.Evaluate(variables)
         if err != nil {
-            return "", err
+            return nil, err
         }
-        values = append(values, value)
+        values = append(values, valueRawNode.Value)
     }
-    return strings.Join(values, delimiter), nil
+    return createRawScalarNode(strings.Join(values, delimiter.Value)), nil
 }
