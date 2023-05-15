@@ -31,10 +31,8 @@ func IsJoin(node *yaml.Node) bool {
         return false
     }
 
-    delimiterNode := node.Content[0]
     valuesNode := node.Content[1]
-    // fmt.Printf("fst = %v, snd = %v, trd = %v\n", IsTerminal(delimiterNode), IsSequence(valuesNode), sequenceHasTerminals(valuesNode))   // 4debug
-    return IsTerminal(delimiterNode) && IsSequence(valuesNode) && sequenceHasTerminals(valuesNode)
+    return IsSequence(valuesNode)
 }
 
 func CreateJoin(path string, node *yaml.Node) *JoinNode {
@@ -63,27 +61,47 @@ func CreateJoin(path string, node *yaml.Node) *JoinNode {
     return &JoinNode{path, delimiter, values}
 }
 
-func (self *JoinNode) Evaluate(variables map[string]string) (string, error) {
-    delimiterNode, err := TerminalFactory(self.delimiter.Path, self.delimiter.rawNode)
-    if err != nil {
-        return "", err
+func (self *JoinNode) evaluateIfCan(
+    path string,
+    node *yaml.Node,
+    variables map[string]*yaml.Node,
+) (*yaml.Node, error) {
+    if !IsEvaluatable(node) {
+        return node, nil
     }
-    delimiter, err := delimiterNode.Evaluate(variables)
+
+    evaluatableNode, err := EvaluatableFactory(path, node)
     if err != nil {
-        return "", err
+        return nil, err
+    }
+    evaluatedRawNode, err := evaluatableNode.Evaluate(variables)
+    if err != nil {
+        return nil, err
+    }
+    return evaluatedRawNode, nil
+}
+
+func (self *JoinNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
+    delimiterNode, err := self.evaluateIfCan(
+        self.delimiter.Path,
+        self.delimiter.rawNode,
+        variables,
+    )
+    if err != nil {
+        return nil, err
     }
 
     var values []string
     for _, value := range self.values {
-        valueNode, err := TerminalFactory(value.Path, value.rawNode)
+        valueRawNode, err := self.evaluateIfCan(
+            value.Path,
+            value.rawNode,
+            variables,
+        )
         if err != nil {
-            return "", err
+            return nil, err
         }
-        value, err := valueNode.Evaluate(variables)
-        if err != nil {
-            return "", err
-        }
-        values = append(values, value)
+        values = append(values, valueRawNode.Value)
     }
-    return strings.Join(values, delimiter), nil
+    return createRawScalarNode(strings.Join(values, delimiterNode.Value)), nil
 }

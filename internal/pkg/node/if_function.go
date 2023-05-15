@@ -2,7 +2,6 @@ package node
 
 import (
     "fmt"
-    "strconv"
     "gopkg.in/yaml.v3"
 )
 
@@ -33,14 +32,7 @@ type IfNode struct {
 func IsIf(node *yaml.Node) bool {
     isIfTaggedSequence := IsSequence(node) && node.Tag == IfNodeTag
     hasThreeChildNodes := len(node.Content) == 3
-    if !(isIfTaggedSequence && hasThreeChildNodes) {
-        return false
-    }
-
-    predicateNode := node.Content[0]
-    trueExpressionNode := node.Content[1]
-    falseExpressionNode := node.Content[2]
-    return IsTerminal(predicateNode) && IsTerminal(trueExpressionNode) && IsTerminal(falseExpressionNode)
+    return isIfTaggedSequence && hasThreeChildNodes
 }
 
 func CreateIf(path string, node *yaml.Node) *IfNode {
@@ -66,35 +58,55 @@ func CreateIf(path string, node *yaml.Node) *IfNode {
     return &IfNode{path, predicateNode, trueExpressionNode, falseExpressionNode}
 }
 
-func (self *IfNode) Evaluate(variables map[string]string) (string, error) {
-    predicateNode, err := TerminalFactory(self.predicate.Path, self.predicate.rawNode)
-    if err != nil {
-        return "", err
-    }
-    predicate, err := predicateNode.Evaluate(variables)
-    if err != nil {
-        return "", err
+func (self *IfNode) evaluateIfCan(
+    path string,
+    node *yaml.Node,
+    variables map[string]*yaml.Node,
+) (*yaml.Node, error) {
+    if !IsEvaluatable(node) {
+        return node, nil
     }
 
-    if predicate == strconv.FormatBool(true) {
-        trueExpressionNode, err := TerminalFactory(self.trueExpression.Path, self.trueExpression.rawNode)
+    evaluatableNode, err := EvaluatableFactory(path, node)
+    if err != nil {
+        return nil, err
+    }
+    evaluatedRawNode, err := evaluatableNode.Evaluate(variables)
+    if err != nil {
+        return nil, err
+    }
+    return evaluatedRawNode, nil
+}
+
+func (self *IfNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
+    predicateNode, err := self.evaluateIfCan(
+        self.predicate.Path,
+        self.predicate.rawNode,
+        variables,
+    )
+    if err != nil {
+        return nil, err
+    }
+
+    if IsTrue(predicateNode) {
+        trueExpression, err := self.evaluateIfCan(
+            self.trueExpression.Path,
+            self.trueExpression.rawNode,
+            variables,
+        )
         if err != nil {
-            return "", err
-        }
-        trueExpression, err := trueExpressionNode.Evaluate(variables)
-        if err != nil {
-            return "", err
+            return nil, err
         }
         return trueExpression, nil
     }
 
-    falseExpressionNode, err := TerminalFactory(self.falseExpression.Path, self.falseExpression.rawNode)
+    falseExpression, err := self.evaluateIfCan(
+        self.falseExpression.Path,
+        self.falseExpression.rawNode,
+        variables,
+    )
     if err != nil {
-        return "", err
-    }
-    falseExpression, err := falseExpressionNode.Evaluate(variables)
-    if err != nil {
-        return "", err
+        return nil, err
     }
     return falseExpression, nil
 }

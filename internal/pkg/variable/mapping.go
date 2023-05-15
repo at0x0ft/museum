@@ -2,6 +2,7 @@ package variable
 
 // import "fmt"   // 4debug
 import (
+    "gopkg.in/yaml.v3"
     "github.com/at0x0ft/museum/internal/pkg/node"
 )
 
@@ -13,11 +14,17 @@ type mappingElement struct {
     node.MappingElement
 }
 
-func (self *mappingNode) visit(variables map[string]string) (map[string]string, error) {
-    return self.visitChildren(variables)
+func (self *mappingNode) visit(variables map[string]*yaml.Node) (map[string]*yaml.Node, error) {
+    var err error
+    variables, err = self.visitChildren(variables)
+    if err != nil {
+        return nil, err
+    }
+    variables[self.Path] = &self.Node
+    return variables, nil
 }
 
-func (self *mappingNode) visitChildren(variables map[string]string) (map[string]string, error) {
+func (self *mappingNode) visitChildren(variables map[string]*yaml.Node) (map[string]*yaml.Node, error) {
     var err error
     for index := 0; index < len(self.Content); index += 2 {
         element := &mappingElement{*node.CreateMappingElement(self.Path, self.Content[index], self.Content[index + 1])}
@@ -33,15 +40,18 @@ func (self *mappingNode) visitChildren(variables map[string]string) (map[string]
     return variables, nil
 }
 
-func (self *mappingElement) visitKey(variables map[string]string) (map[string]string, error) {
-    node, err := visitableFactory(self.Path, self.KeyNode)
+func (self *mappingElement) visitKey(variables map[string]*yaml.Node) (map[string]*yaml.Node, error) {
+    // TODO: refine keyPostfix as unique
+    // e.g. previous value has "|" character
+    keyPostFix := "|key|."
+    node, err := visitableFactory(self.Path + keyPostFix, self.KeyNode)
     if err != nil {
         return nil, err
     }
     return node.visit(variables)
 }
 
-func (self *mappingElement) visitValue(variables map[string]string) (map[string]string, error) {
+func (self *mappingElement) visitValue(variables map[string]*yaml.Node) (map[string]*yaml.Node, error) {
     node, err := visitableFactory(self.Path, self.ValueNode)
     if err != nil {
         return nil, err

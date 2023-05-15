@@ -43,9 +43,15 @@ func (self *scalarNode) evaluateConst(collectionName string) error {
 }
 
 func (self *scalarNode) resolveVarNode(collectionName string) {
-    if node.IsVariable(&self.Node) {
+    if node.IsNullableVariable(&self.Node) {
+        nullableVarNode := node.CreateNullableVariable(self.Path, &self.Node)
+        self.Value = nullableVarNode.GetCanonicalValuePath(collectionName)
+    } else if node.IsVariable(&self.Node) {
         varNode := node.CreateVariable(self.Path, &self.Node)
         self.Value = varNode.GetCanonicalValuePath(collectionName)
+    } else if node.IsDefined(&self.Node) {
+        definedNode := node.CreateDefined(self.Path, &self.Node)
+        self.Value = definedNode.GetCanonicalValuePath(collectionName)
     }
 }
 

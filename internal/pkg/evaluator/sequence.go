@@ -10,17 +10,25 @@ type sequenceNode struct {
     node.SequenceNode
 }
 
-func (self *sequenceNode) visit(variables map[string]string) (*yaml.Node, error) {
-    if node.IsTerminal(&self.Node) {
-        t, err := node.TerminalFactory(self.Path, &self.Node)
+func (self *sequenceNode) visit(variables map[string]*yaml.Node) (*yaml.Node, error) {
+    if node.IsEvaluatable(&self.Node) {
+        t, err := node.EvaluatableFactory(self.Path, &self.Node)
         if err != nil {
             return nil, err
         }
-        value, err := t.Evaluate(variables)
+        evaluatedRawNode, err := t.Evaluate(variables)
         if err != nil {
             return nil, err
         }
-        return self.createEvaluatedScalar(value), nil
+
+        if evaluatedRawNode != &self.Node {
+            evaluatedNode, err := visitableFactory(self.Path, evaluatedRawNode)
+            if err != nil {
+                return nil, err
+            }
+            return evaluatedNode.visit(variables)
+        }
+        return evaluatedRawNode, nil
     }
 
     newChildNodes, err := self.visitChildren(variables)
@@ -30,7 +38,7 @@ func (self *sequenceNode) visit(variables map[string]string) (*yaml.Node, error)
     return self.createNew(newChildNodes), nil
 }
 
-func (self *sequenceNode) visitChildren(variables map[string]string) ([]*yaml.Node, error) {
+func (self *sequenceNode) visitChildren(variables map[string]*yaml.Node) ([]*yaml.Node, error) {
     var newChildNodes []*yaml.Node
     for index, childRawNode := range self.Content {
         suffix := fmt.Sprintf("[%d]", index)
@@ -43,7 +51,9 @@ func (self *sequenceNode) visitChildren(variables map[string]string) ([]*yaml.No
         if err != nil {
             return nil, err
         }
-        newChildNodes = append(newChildNodes, newChildNode)
+        if !node.IsNull(newChildNode) {
+            newChildNodes = append(newChildNodes, newChildNode)
+        }
     }
     return newChildNodes, nil
 }

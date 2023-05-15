@@ -5,6 +5,7 @@ import (
     "fmt"
     "path/filepath"
     "io/ioutil"
+    "strings"
     "gopkg.in/yaml.v3"
 )
 
@@ -130,6 +131,87 @@ func (self *Skeleton) getCanonical(baseAbsDir string) (*Skeleton, error) {
     return result, nil
 }
 
+func (self *Skeleton) getDockerComposeValueNode(arguments *yaml.Node) (*yaml.Node, error) {
+    splitKey := strings.Split(DOCKER_COMPOSE_KEY, ".")
+    dockerComposeKeyNodeValue := splitKey[len(splitKey) - 1]
+    for index := 0; index < len(arguments.Content); index += 2 {
+        if arguments.Content[index].Value == dockerComposeKeyNodeValue {
+            return arguments.Content[index + 1], nil
+        }
+    }
+    return nil, fmt.Errorf(
+        "[Error] '%s' is not set in skeleton.yml!",
+        DOCKER_COMPOSE_KEY,
+    )
+}
+
+func (self *Skeleton) findVscodeExtensionVolumesKeyIndex(dockerComposeVolumeNode *yaml.Node) (int, error) {
+    splitKey := strings.Split(VSCODE_EXTENSION_VOLUMES_KEY, ".")
+    vscodeExtensionVolumes := splitKey[len(splitKey) - 1]
+    result := -1
+    for index := 0; index < len(dockerComposeVolumeNode.Content); index += 2 {
+        if dockerComposeVolumeNode.Content[index].Value == vscodeExtensionVolumes {
+            result = index
+            break
+        }
+    }
+    if result == -1 {
+        return result, fmt.Errorf(
+            "[Error] '%s' is not found in Skeleton struct!",
+            VSCODE_EXTENSION_VOLUMES_KEY,
+        )
+    }
+    return result, nil
+}
+
+func (self *Skeleton) filterValueNotSetContents(mapping *yaml.Node) *yaml.Node {
+    var filteredContents []*yaml.Node
+    for index := 0; index < len(mapping.Content); index += 2 {
+        if mapping.Content[index + 1].Value != "" {
+            filteredContents = append(
+                filteredContents,
+                mapping.Content[index],
+                mapping.Content[index + 1],
+            )
+        }
+    }
+    mapping.Content = filteredContents
+    return mapping
+}
+
+func (self *Skeleton) removeKeyValueFromContent(content []*yaml.Node, keyIndex int) ([]*yaml.Node, error) {
+    if keyIndex < 0 || keyIndex + 1 >= len(content) {
+        return nil, fmt.Errorf("[Error] given key index = %v is out of range!", keyIndex)
+    }
+    return append(content[:keyIndex], content[keyIndex + 2:]...), nil
+}
+
+func (self *Skeleton) filterOptionalArguments(arguments *yaml.Node) (*yaml.Node, error) {
+    dockerComposeValueNode, err := self.getDockerComposeValueNode(arguments)
+    if err != nil {
+        return nil, err
+    }
+    vscodeExtensionVolumesKeyIndex, err := self.findVscodeExtensionVolumesKeyIndex(dockerComposeValueNode)
+    if err != nil {
+        return nil, err
+    }
+
+    vscodeExtensionVolumesValueNode := dockerComposeValueNode.Content[vscodeExtensionVolumesKeyIndex + 1]
+    vscodeExtensionVolumesValueNode = self.filterValueNotSetContents(vscodeExtensionVolumesValueNode)
+    if len(vscodeExtensionVolumesValueNode.Content) == 0 {
+        filteredContent, err := self.removeKeyValueFromContent(
+            dockerComposeValueNode.Content,
+            vscodeExtensionVolumesKeyIndex,
+        )
+        if err != nil {
+            return nil, err
+        }
+        dockerComposeValueNode.Content = filteredContent
+    }
+
+    return arguments, nil
+}
+
 func (self *Skeleton) GetRawArguments() (*yaml.Node, *yaml.Node, error) {
     var buf bytes.Buffer
     yamlEncoder := yaml.NewEncoder(&buf)
@@ -154,6 +236,12 @@ func (self *Skeleton) GetRawArguments() (*yaml.Node, *yaml.Node, error) {
             "[Error] '%s' is not found in skeleton.yml!",
             ARGUMENTS_KEY,
         )
+    }
+
+    var err error
+    valueNode, err = self.filterOptionalArguments(valueNode)
+    if err != nil {
+        return nil, nil, err
     }
     return keyNode, valueNode, nil
 }
@@ -199,16 +287,18 @@ func (self *Arguments) getCanonical(baseAbsDir string) (*Arguments, error) {
         return nil, err
     }
 
-    result := *self
-    var dockerComposeAbsPaths []string
-    for _, path := range self.DockerCompose.Files {
-        dockerComposeAbsPaths = append(
-            dockerComposeAbsPaths,
-            resolvePath(baseAbsDir, path),
-        )
-    }
-    result.DockerCompose.Files = dockerComposeAbsPaths
-    return &result, nil
+    // keep given path as relative because paths are passed to devcontainer.json
+    // result := *self
+    // var dockerComposeAbsPaths []string
+    // for _, path := range self.DockerCompose.Files {
+    //     dockerComposeAbsPaths = append(
+    //         dockerComposeAbsPaths,
+    //         resolvePath(baseAbsDir, path),
+    //     )
+    // }
+    // result.DockerCompose.Files = dockerComposeAbsPaths
+    // return &result, nil
+    return self, nil
 }
 
 func (self *Collections) validate() error {

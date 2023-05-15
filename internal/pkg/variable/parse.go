@@ -1,10 +1,13 @@
 package variable
 
-import "github.com/at0x0ft/museum/internal/pkg/schema"
+import (
+    "gopkg.in/yaml.v3"
+    "github.com/at0x0ft/museum/internal/pkg/schema"
+)
 
-func Parse(seed *schema.Seed) (map[string]string, error) {
+func Parse(seed *schema.Seed) (map[string]*yaml.Node, error) {
     varRoot := &seed.Variables
-    variables := make(map[string]string)
+    variables := make(map[string]*yaml.Node)
     r, err := visitableFactory("", varRoot)
     if err != nil {
         return nil, err

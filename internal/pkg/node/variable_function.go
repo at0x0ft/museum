@@ -13,18 +13,23 @@ type VariableNode struct {
 }
 
 func IsVariable(node *yaml.Node) bool {
-    return (node.Kind & yaml.ScalarNode) != 0 && (node.Style & yaml.TaggedStyle) != 0 && node.Tag == VariableNodeTag
+    return IsScalar(node) && (node.Style & yaml.TaggedStyle) != 0 && node.Tag == VariableNodeTag
 }
 
 func CreateVariable(path string, node *yaml.Node) *VariableNode {
     return &VariableNode{path, *node}
 }
 
-func (self *VariableNode) Evaluate(variables map[string]string) (string, error) {
+func (self *VariableNode) Evaluate(variables map[string]*yaml.Node) (*yaml.Node, error) {
     if result, ok := variables[self.Value]; ok {
         return result, nil
     }
-    return "", fmt.Errorf("[Error]: Not found corresponding variable for key = %v (line = %v, column = %v) .", self.Value, self.Line, self.Column)
+    return nil, fmt.Errorf(
+        "[Error]: Not found corresponding variable for key = %v (line = %v, column = %v) .",
+        self.Value,
+        self.Line,
+        self.Column,
+    )
 }
 
 func (self *VariableNode) isRelativeVariablePath() bool {

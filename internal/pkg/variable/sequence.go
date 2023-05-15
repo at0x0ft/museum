@@ -2,6 +2,7 @@ package variable
 
 import (
     "fmt"
+    "gopkg.in/yaml.v3"
     "github.com/at0x0ft/museum/internal/pkg/node"
 )
 
@@ -9,23 +10,30 @@ type sequenceNode struct {
     node.SequenceNode
 }
 
-func (self *sequenceNode) visit(variables map[string]string) (map[string]string, error) {
-    if node.IsTerminal(&self.Node) {
-        t, err := node.TerminalFactory(self.Path, &self.Node)
+func (self *sequenceNode) visit(variables map[string]*yaml.Node) (map[string]*yaml.Node, error) {
+    var rawNode *yaml.Node
+    if node.IsEvaluatable(&self.Node) {
+        t, err := node.EvaluatableFactory(self.Path, &self.Node)
         if err != nil {
             return nil, err
         }
-        value, err := t.Evaluate(variables)
+        rawNode, err = t.Evaluate(variables)
         if err != nil {
             return nil, err
         }
-        variables[self.Path] = value
-        return variables, nil
+    } else {
+        var err error
+        variables, err = self.visitChildren(variables)
+        if err != nil {
+            return nil, err
+        }
+        rawNode = &self.Node
     }
-    return self.visitChildren(variables)
+    variables[self.Path] = rawNode
+    return variables, nil
 }
 
-func (self *sequenceNode) visitChildren(variables map[string]string) (map[string]string, error) {
+func (self *sequenceNode) visitChildren(variables map[string]*yaml.Node) (map[string]*yaml.Node, error) {
     for index, childRawNode := range self.Content {
         suffix := fmt.Sprintf("[%d]", index)
         childNode, err := visitableFactory(self.Path + suffix, childRawNode)
