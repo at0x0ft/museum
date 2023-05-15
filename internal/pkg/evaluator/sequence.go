@@ -51,7 +51,9 @@ func (self *sequenceNode) visitChildren(variables map[string]*yaml.Node) ([]*yam
         if err != nil {
             return nil, err
         }
-        newChildNodes = append(newChildNodes, newChildNode)
+        if !node.IsNull(newChildNode) {
+            newChildNodes = append(newChildNodes, newChildNode)
+        }
     }
     return newChildNodes, nil
 }

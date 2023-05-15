@@ -26,34 +26,37 @@ func (self *mappingNode) visitChildren(variables map[string]*yaml.Node) ([]*yaml
     var newChildNodes []*yaml.Node
     for index := 0; index < len(self.Content); index += 2 {
         element := &mappingElement{*node.CreateMappingElement(self.Path, self.Content[index], self.Content[index + 1])}
-        newKeyNode, err := element.visitKey(variables)
+        keyNode, valueNode, err := element.visit(variables)
         if err != nil {
             return nil, err
         }
-        newChildNodes = append(newChildNodes, newKeyNode)
-        newValueNode, err := element.visitValue(variables)
-        if err != nil {
-            return nil, err
+
+        if !node.IsNull(keyNode) && !node.IsNull(valueNode) {
+            newChildNodes = append(newChildNodes, keyNode, valueNode)
         }
-        newChildNodes = append(newChildNodes, newValueNode)
     }
     return newChildNodes, nil
 }
 
-func (self *mappingElement) visitKey(variables map[string]*yaml.Node) (*yaml.Node, error) {
-    node, err := visitableFactory(self.Path, self.KeyNode)
+func (self *mappingElement) visit(variables map[string]*yaml.Node) (*yaml.Node, *yaml.Node, error) {
+    keyNode, err := visitableFactory(self.Path, self.KeyNode)
     if err != nil {
-        return nil, err
+        return nil, nil, err
     }
-    return node.visit(variables)
-}
+    newKeyNode, err := keyNode.visit(variables)
+    if err != nil {
+        return nil, nil, err
+    }
 
-func (self *mappingElement) visitValue(variables map[string]*yaml.Node) (*yaml.Node, error) {
-    node, err := visitableFactory(self.Path, self.ValueNode)
+    valueNode, err := visitableFactory(self.Path, self.ValueNode)
     if err != nil {
-        return nil, err
+        return nil, nil, err
     }
-    return node.visit(variables)
+    newValueNode, err := valueNode.visit(variables)
+    if err != nil {
+        return nil, nil, err
+    }
+    return newKeyNode, newValueNode, nil
 }
 
 func (self *mappingNode) createNew(newContent[]*yaml.Node) *yaml.Node {
