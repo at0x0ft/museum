@@ -1,10 +1,10 @@
 package schema
 
-// import "fmt"    // 4debug
 // import "github.com/at0x0ft/museum/internal/pkg/debug"    // 4debug
 import (
     "bytes"
     _ "embed"
+    "fmt"
     "path/filepath"
     "io/ioutil"
     "gopkg.in/yaml.v3"
@@ -93,4 +93,51 @@ func (self *Seed) WriteDockerCompose(dirPath string) error {
         return err
     }
     return nil
+}
+
+func (self *Seed) findValueNodeInMapping(mapping *yaml.Node, keyName string) (*yaml.Node, error) {
+    for index := 0; index < len(mapping.Content); index += 2 {
+        keyNode, valueNode := mapping.Content[index], mapping.Content[index + 1]
+        if keyNode.Value == keyName {
+            return valueNode, nil
+        }
+    }
+    return nil, fmt.Errorf("[Error] Cannot find '%s' key node in mapping!", keyName)
+}
+
+func (self *Seed) getCommonArgumentsRoot() (*yaml.Node, error) {
+    commonServiceValueNode, err := self.findValueNodeInMapping(
+        &self.Variables,
+        COMMON_COLLECTION_NAME_KEY,
+    )
+    if err != nil {
+        return nil, err
+    }
+    commonArgumentsValueNode, err := self.findValueNodeInMapping(
+        commonServiceValueNode,
+        ARGUMENTS_KEY,
+    )
+    if err != nil {
+        return nil, err
+    }
+    return commonArgumentsValueNode, nil
+}
+
+func (self *Seed) GetComposeProjectPrefix() (string, error) {
+    commonArgumentsRootNode, err := self.getCommonArgumentsRoot()
+    if err != nil {
+        return "", err
+    }
+    var buf bytes.Buffer
+    yamlEncoder := yaml.NewEncoder(&buf)
+    defer yamlEncoder.Close()
+    yamlEncoder.SetIndent(2)
+    yamlEncoder.Encode(&commonArgumentsRootNode)
+
+    var data *Arguments
+    if err := yaml.Unmarshal(buf.Bytes(), &data); err != nil {
+        return "", err
+    }
+
+    return data.DockerCompose.ProjectPrefix, nil
 }
