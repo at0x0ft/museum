@@ -7,11 +7,13 @@ package cmd
 import (
     "fmt"
     "os"
+    "path/filepath"
     "gopkg.in/yaml.v3"
     "github.com/spf13/cobra"
     "github.com/at0x0ft/museum/internal/pkg/evaluator"
     "github.com/at0x0ft/museum/internal/pkg/variable"
     "github.com/at0x0ft/museum/internal/pkg/schema"
+    "github.com/at0x0ft/museum/internal/pkg/util"
 )
 
 // deployCmd represents the deploy command
@@ -61,6 +63,11 @@ func deploy(args []string) {
         os.Exit(1)
     }
 
+    if err := deployComposeConfig(evaluatedSeed, devcontainerDirPath); err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+
     if err := evaluatedSeed.WriteDevcontainer(devcontainerDirPath); err != nil {
         fmt.Println(err)
         os.Exit(1)
@@ -88,4 +95,30 @@ func evaluateSeed(seed *schema.Seed, variables map[string]*yaml.Node) (*schema.S
         DockerCompose: *evaluatedDockerCompose,
     }
     return &evaluatedSeed, nil
+}
+
+func deployComposeConfig(seed *schema.Seed, devcontainerDirPath string) error {
+    dockerComposeProjectPrefix, err := seed.GetComposeProjectPrefix()
+    if err != nil {
+        return err
+    }
+
+    composeConfig := schema.CreateComposeConfig(dockerComposeProjectPrefix)
+    if err := composeConfig.Write(devcontainerDirPath); err != nil {
+        return err
+    }
+
+    envLinkSrcPath := filepath.Join(
+        filepath.Dir(devcontainerDirPath),
+        schema.ComposeConfigLinkDstFilename,
+    )
+    if util.FileExists(envLinkSrcPath) {
+        fmt.Printf("[Warn] '%s' has already exists. Creating symlink is skipped.\n", envLinkSrcPath)
+    } else {
+        envLinkDstPath := composeConfig.GetFilepath(devcontainerDirPath)
+        if err := os.Symlink(envLinkDstPath, envLinkSrcPath); err != nil {
+            return err
+        }
+    }
+    return nil
 }

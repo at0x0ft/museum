@@ -12,6 +12,7 @@ import (
     "github.com/spf13/cobra"
     "github.com/at0x0ft/museum/internal/pkg/merger"
     "github.com/at0x0ft/museum/internal/pkg/schema"
+    "github.com/at0x0ft/museum/internal/pkg/util"
 )
 
 // mixCmd represents the mix command
@@ -94,7 +95,7 @@ func copyDockerFiles(skeleton *schema.Skeleton, dstRootDir string) error {
 }
 
 func initializeDirectory(path string) error {
-    if fileExists(path) {
+    if util.FileExists(path) {
         if err := os.RemoveAll(path); err != nil {
             return err
         }
@@ -103,9 +104,4 @@ func initializeDirectory(path string) error {
         return err
     }
     return nil
-}
-
-func fileExists(path string) bool {
-    _, err := os.Stat(path)
-    return err == nil
 }
