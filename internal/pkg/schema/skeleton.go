@@ -3,9 +3,9 @@ package schema
 import (
     "bytes"
     "fmt"
-    "path/filepath"
-    "io/ioutil"
+    "os"
     "strings"
+    "path/filepath"
     "gopkg.in/yaml.v3"
 )
 
@@ -67,7 +67,7 @@ func LoadSkeleton(dirPath string) (*Skeleton, error) {
         return nil, err
     }
     fileAbsPath := filepath.Join(dirAbsPath, SkeletonFilename)
-    buf, err := ioutil.ReadFile(fileAbsPath)
+    buf, err := os.ReadFile(fileAbsPath)
     if err != nil {
         return nil, err
     }

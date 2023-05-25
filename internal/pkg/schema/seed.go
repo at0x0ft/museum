@@ -5,8 +5,8 @@ import (
     "bytes"
     _ "embed"
     "fmt"
+    "os"
     "path/filepath"
-    "io/ioutil"
     "gopkg.in/yaml.v3"
     "github.com/at0x0ft/museum/internal/pkg/jsonc"
 )
@@ -33,7 +33,7 @@ var commonSeedRawData []byte
 
 func LoadSeed(dirPath string) (*Seed, error) {
     filePath := filepath.Join(dirPath, SeedFilename)
-    buf, err := ioutil.ReadFile(filePath)
+    buf, err := os.ReadFile(filePath)
     if err != nil {
         return nil, err
     }
@@ -62,7 +62,7 @@ func (self *Seed) WriteToFile(dirPath string) error {
     yamlEncoder.SetIndent(2)
 
     yamlEncoder.Encode(&self)
-    if err := ioutil.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
+    if err := os.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
         return err
     }
     return nil
@@ -75,7 +75,7 @@ func (self *Seed) WriteDevcontainer(dirPath string) error {
     }
 
     filePath := filepath.Join(dirPath, DevContainerFileName)
-    if err := ioutil.WriteFile(filePath, []byte(jsoncContent), 0644); err != nil {
+    if err := os.WriteFile(filePath, []byte(jsoncContent), 0644); err != nil {
         return err
     }
     return nil
@@ -89,7 +89,7 @@ func (self *Seed) WriteDockerCompose(dirPath string) error {
     yamlEncoder.SetIndent(2)
 
     yamlEncoder.Encode(&self.Configs.DockerCompose)
-    if err := ioutil.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
+    if err := os.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
         return err
     }
     return nil
