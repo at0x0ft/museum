@@ -3,9 +3,8 @@ package schema
 // import "github.com/at0x0ft/museum/internal/pkg/debug"    // 4debug
 import (
     "fmt"
-    // "bytes"
+    "os"
     "path/filepath"
-    "io/ioutil"
 )
 
 // TODO: replace with viper or other .env file r/w tools...
@@ -29,7 +28,7 @@ func CreateComposeConfig(composeName string) *DockerComposeConfig {
 func (self *DockerComposeConfig) Write(dirPath string) error {
     filePath := self.GetFilepath(dirPath)
     content := fmt.Sprintf("%s='%s'\n", ComposeNameKey, self.ComposeName)
-    if err := ioutil.WriteFile(filePath, []byte(content), 0644); err != nil {
+    if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
         return err
     }
     return nil
