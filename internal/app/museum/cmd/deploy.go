@@ -115,8 +115,13 @@ func deployComposeConfig(seed *schema.Seed, devcontainerDirPath string) error {
     if util.FileExists(envLinkSrcPath) {
         fmt.Printf("[Warn] '%s' has already exists. Creating symlink is skipped.\n", envLinkSrcPath)
     } else {
-        envLinkDstPath := composeConfig.GetFilepath(devcontainerDirPath)
-        if err := os.Symlink(envLinkDstPath, envLinkSrcPath); err != nil {
+        envLinkDstPath, err := filepath.Rel(
+            filepath.Dir(envLinkSrcPath),
+            composeConfig.GetFilepath(devcontainerDirPath),
+        )
+        if err != nil {
+            return err
+        } else if err := os.Symlink(envLinkDstPath, envLinkSrcPath); err != nil {
             return err
         }
     }
