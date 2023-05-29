@@ -20,4 +20,16 @@
 # Go workspace file
 go.work
 
+# ignore built binaries & cache
+/.go_build/*
+!/.go_build/.gitkeep
+!/.go_build/cache
+/.go_build/cache/*
+!/.go_build/cache/.gitkeep
+!/.go_build/pkg
+/.go_build/pkg/*
+!/.go_build/pkg/.gitkeep
+/bin/*
+!/bin/.gitkeep
+
 !.gitignore
