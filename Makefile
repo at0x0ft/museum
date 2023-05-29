@@ -10,3 +10,8 @@ stat:
 clean:
 	docker-compose down && \
 	rm -rf ./bin/*
+
+.PHONY: cache_clear
+cache_clear:
+	sudo rm -rf ./.go_build/* && \
+	git checkout HEAD -- ./.go_build
