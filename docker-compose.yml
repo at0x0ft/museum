@@ -1,26 +1,25 @@
 version: "3.7"
 
-x-museum_build_config: &museum_build_config
-  context: .
-  dockerfile: Dockerfile
-  args:
-    - GO_VERSION=1.19
-    - DEBIAN_VERSION=11-slim
+x-general_config: &general_config
+  image: golang:1.19
+  working_dir: /workspace
+  volumes:
+    - .:/workspace
+    - /etc/passwd:/etc/passwd:ro
+    - /etc/group:/etc/group:ro
+    - ./.go_build/cache:/tmp/.cache
+    - ./.go_build/pkg:/go/pkg
+  environment:
+    - HOME=/tmp
+
 
 services:
-  museum_dev:
-    build:
-      <<: *museum_build_config
-      target: dev
-    working_dir: /workspace
-    volumes:
-      - .:/workspace
-
-  museum:
-    build:
-      <<: *museum_build_config
-      target: prod
-    working_dir: /workspace
-    volumes:
-      - ${PWD}:/workspace
-    entrypoint: /museum
+  build:
+    <<: *general_config
+    entrypoint: go build -o ./bin -ldflags "-s -w"
+  run:
+    <<: *general_config
+    entrypoint: go run
+  go:
+    <<: *general_config
+    entrypoint: go
