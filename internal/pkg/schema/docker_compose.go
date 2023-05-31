@@ -17,21 +17,21 @@ const (
 type DockerCompose struct {
     Version string `yaml:"version"`
     Services map[string]DockerComposeService `yaml:"services"`
-    Volumes map[string]string `yaml:"volumes"`
+    Volumes map[string]map[string]interface{} `yaml:"volumes,omitempty"`
 }
 
 type DockerComposeService struct {
     Build struct {
-        Context string `yaml:"context"`
-        Dockerfile string `yaml:"dockerfile"`
-        Args []string `yaml:"args"`
-        Target string `yaml:"target"`
-    } `yaml:"build"`
-    WorkingDir string `yaml:"working_dir"`
-    Volumes []string `yaml:"volumes"`
-    EntryPoint string `yaml:"entrypoint"`
-    Command string `yaml:"command"`
-    User string `yaml:"user"`
+        Context string `yaml:"context,omitempty"`
+        Dockerfile string `yaml:"dockerfile,omitempty"`
+        Args []string `yaml:"args,omitempty"`
+        Target string `yaml:"target,omitempty"`
+    } `yaml:"build,omitempty"`
+    WorkingDir string `yaml:"working_dir,omitempty"`
+    Volumes []string `yaml:"volumes,omitempty"`
+    EntryPoint string `yaml:"entrypoint,omitempty"`
+    Command string `yaml:"command,omitempty"`
+    User string `yaml:"user,omitempty"`
     // TODO: append later
     // TODO: x-* anchor path conversion should support
 }
@@ -47,6 +47,7 @@ func ConvertDockerComposeYamlToStruct(root *yaml.Node) (*DockerCompose, error) {
     if err := yaml.Unmarshal(buf.Bytes(), &data); err != nil {
         return nil, err
     }
+    // fmt.Println(data.Volumes)   // 4debug
     return data, nil
 }
 
