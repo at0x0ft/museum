@@ -62,6 +62,16 @@ func deploy(args []string) {
         fmt.Println(err)
         os.Exit(1)
     }
+    dockerCompose, err := schema.ConvertDockerComposeYamlToStruct(&evaluatedSeed.Configs.DockerCompose)
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+    evaluatedDockerCompose, err := dockerCompose.ConvertVolumeRelpathToAbs(devcontainerDirPath)
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
 
     if err := deployComposeConfig(evaluatedSeed, devcontainerDirPath); err != nil {
         fmt.Println(err)
@@ -72,7 +82,7 @@ func deploy(args []string) {
         fmt.Println(err)
         os.Exit(1)
     }
-    if err := evaluatedSeed.WriteDockerCompose(devcontainerDirPath); err != nil {
+    if err := evaluatedDockerCompose.Write(devcontainerDirPath); err != nil {
         fmt.Println(err)
         os.Exit(1)
     }

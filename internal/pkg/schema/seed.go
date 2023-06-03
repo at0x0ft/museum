@@ -14,7 +14,6 @@ import (
 const (
     SeedFilename = "seed.yml"
     DevContainerFileName string = "devcontainer.json"
-    DockerComposeFileName string = "docker-compose.yml"
 )
 
 type Configs struct {
