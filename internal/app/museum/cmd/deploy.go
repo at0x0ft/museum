@@ -62,6 +62,16 @@ func deploy(args []string) {
         fmt.Println(err)
         os.Exit(1)
     }
+    dockerCompose, err := schema.ConvertDockerComposeYamlToStruct(&evaluatedSeed.Configs.DockerCompose)
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+    evaluatedDockerCompose, err := dockerCompose.ConvertVolumeRelpathToAbs(devcontainerDirPath)
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
 
     if err := deployComposeConfig(evaluatedSeed, devcontainerDirPath); err != nil {
         fmt.Println(err)
@@ -72,7 +82,7 @@ func deploy(args []string) {
         fmt.Println(err)
         os.Exit(1)
     }
-    if err := evaluatedSeed.WriteDockerCompose(devcontainerDirPath); err != nil {
+    if err := evaluatedDockerCompose.Write(devcontainerDirPath); err != nil {
         fmt.Println(err)
         os.Exit(1)
     }
@@ -115,8 +125,13 @@ func deployComposeConfig(seed *schema.Seed, devcontainerDirPath string) error {
     if util.FileExists(envLinkSrcPath) {
         fmt.Printf("[Warn] '%s' has already exists. Creating symlink is skipped.\n", envLinkSrcPath)
     } else {
-        envLinkDstPath := composeConfig.GetFilepath(devcontainerDirPath)
-        if err := os.Symlink(envLinkDstPath, envLinkSrcPath); err != nil {
+        envLinkDstPath, err := filepath.Rel(
+            filepath.Dir(envLinkSrcPath),
+            composeConfig.GetFilepath(devcontainerDirPath),
+        )
+        if err != nil {
+            return err
+        } else if err := os.Symlink(envLinkDstPath, envLinkSrcPath); err != nil {
             return err
         }
     }
