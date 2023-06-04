@@ -287,16 +287,19 @@ func (self *Arguments) getCanonical(baseAbsDir string) (*Arguments, error) {
         return nil, err
     }
 
-    result := *self
-    var dockerComposeAbsPaths []string
-    for _, path := range self.DockerCompose.Files {
-        dockerComposeAbsPaths = append(
-            dockerComposeAbsPaths,
-            resolvePath(baseAbsDir, path),
-        )
-    }
-    result.DockerCompose.Files = dockerComposeAbsPaths
-    return &result, nil
+    // keep given path as relative
+    // note: devcontainer.json is referred by both host & container.
+    // result := *self
+    // var dockerComposeAbsPaths []string
+    // for _, path := range self.DockerCompose.Files {
+    //     dockerComposeAbsPaths = append(
+    //         dockerComposeAbsPaths,
+    //         resolvePath(baseAbsDir, path),
+    //     )
+    // }
+    // result.DockerCompose.Files = dockerComposeAbsPaths
+    // return &result, nil
+    return self, nil
 }
 
 func (self *Collections) validate() error {

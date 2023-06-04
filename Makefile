@@ -2,6 +2,10 @@
 build:
 	docker-compose run --rm -u "$$(id -u):$$(id -g)" build github.com/at0x0ft/museum/cmd/museum
 
+.PHONY: build_pathru
+build_pathru:
+	docker-compose run --rm -u "$$(id -u):$$(id -g)" build github.com/at0x0ft/museum/cmd/pathru
+
 .PHONY: stat
 stat:
 	docker-compose run --rm -u "$$(id -u):$$(id -g)" go version -m ./bin/*

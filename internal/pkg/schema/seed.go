@@ -13,7 +13,6 @@ import (
 
 const (
     SeedFilename = "seed.yml"
-    DevContainerFileName string = "devcontainer.json"
 )
 
 type Configs struct {

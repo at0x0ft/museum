@@ -5,6 +5,7 @@ import (
     "bytes"
     "os"
     "strings"
+    "os/exec"
     "path/filepath"
     "gopkg.in/yaml.v3"
 )
@@ -36,19 +37,36 @@ type DockerComposeService struct {
     // TODO: x-* anchor path conversion should support
 }
 
+func loadDockerComposeByteData(data []byte) (*DockerCompose, error) {
+    var res DockerCompose
+    if err := yaml.Unmarshal(data, &res); err != nil {
+        return nil, err
+    }
+    return &res, nil
+}
+
+func LoadMultipleDockerComposes(dockerComposeFileList []string) (*DockerCompose, error) {
+    var args []string
+    for _, dockerComposeFile := range dockerComposeFileList {
+        args = append(args, "-f", dockerComposeFile)
+    }
+    args = append(args, "config")
+    cmd := exec.Command("docker-compose", args...)
+    // TODO: split stdout & stderr
+    out, err := cmd.CombinedOutput()
+    if err != nil {
+        return nil, err
+    }
+    return loadDockerComposeByteData(out)
+}
+
 func ConvertDockerComposeYamlToStruct(root *yaml.Node) (*DockerCompose, error) {
     var buf bytes.Buffer
     yamlEncoder := yaml.NewEncoder(&buf)
     defer yamlEncoder.Close()
     yamlEncoder.SetIndent(2)
     yamlEncoder.Encode(&root)
-
-    var data *DockerCompose
-    if err := yaml.Unmarshal(buf.Bytes(), &data); err != nil {
-        return nil, err
-    }
-    // fmt.Println(data.Volumes)   // 4debug
-    return data, nil
+    return loadDockerComposeByteData(buf.Bytes())
 }
 
 func (self *DockerCompose) isVolumeMounted(volume string) bool {

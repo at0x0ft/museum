@@ -7,14 +7,17 @@ package cmd
 import "fmt"    // 4debug
 import (
     "os"
+    "strings"
     "os/exec"
     "path/filepath"
     "github.com/spf13/cobra"
+    "github.com/at0x0ft/museum/internal/pkg/schema"
 )
 
 const (
     SrcMountPointEnv = "CONTAINER_WORKSPACE_FOLDER"
     HostMountPointEnv = "LOCAL_WORKSPACE_FOLDER"
+    DevContainerDirname = ".devcontainer"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -59,6 +62,7 @@ func execBody(args []string) {
     }
 
     // TODO: runtime service name validation
+    // 1. make sure 'CONTAINER_WORKSPACE_FOLDER' is set.
     // note: should validate in later?
     runtimeServiceName := args[0]
     executeCommand := args[1]
@@ -69,10 +73,11 @@ func execBody(args []string) {
         fmt.Println(err)
         os.Exit(1)
     }
-    fmt.Println(convertedArgs)  // 4debug
+    // fmt.Println(convertedArgs)  // 4debug
 
     output, exitCode := execDockerCompose(convertedArgs)
     if exitCode != 0 {
+        fmt.Println("[Error] docker-compose run failed.")
         fmt.Println(output)
         os.Exit(exitCode)
     }
@@ -92,10 +97,52 @@ func tryResolvingPath(arg string) (bool, string) {
     return true, absPath
 }
 
+func getDockerComposeFileAbsPathList() ([]string, error) {
+    devcontainerDirPath := filepath.Join(os.Getenv(SrcMountPointEnv), DevContainerDirname)
+    devcontainer, err := schema.LoadDevcontainer(devcontainerDirPath)
+    if err != nil {
+        return nil, err
+    }
+
+    var absPathList []string
+    for _, dockerComposeFileRelpath := range devcontainer.DockerComposeFile {
+        absPathList = append(absPathList, filepath.Join(devcontainerDirPath, dockerComposeFileRelpath))
+    }
+    return absPathList, nil
+}
+
+func serviceExists(serviceName string, dockerComposeFileList []string) error {
+    dockerCompose, err := schema.LoadMultipleDockerComposes(dockerComposeFileList)
+    if err != nil {
+        return err
+    }
+    // fmt.Println(dockerCompose)   // 4debug
+
+    for definedService, _ := range dockerCompose.Services {
+        if serviceName == definedService {
+            return nil
+        }
+    }
+    return fmt.Errorf(
+        "[Error] service = '%s' not exists in docker-compose.yml files (%v) .",
+        serviceName,
+        strings.Join(dockerComposeFileList, ", "),
+    )
+}
+
 func getRuntimeMountPoints(serviceName string) (string, string, error) {
+    dockerComposeFileList, err := getDockerComposeFileAbsPathList()
+    if err != nil {
+        return "", "", err
+    }
+
+    if err := serviceExists(serviceName, dockerComposeFileList); err != nil {
+        return "", "", err
+    }
+
+    // os.Exit(1)  // 4debug
     // TODO: implement later
-    // 1. load docker-compose.yml
-    // 2. validate whether specified service is exist or not
+
     // 3. get runtime container mount point path
     // 4. (host) source-path, (container) destination-path, error
     return "", "", nil
@@ -140,12 +187,11 @@ func convertPathIfFileExists(runtimeServiceName string, executeCommand string, a
 func execDockerCompose(args []string) (string, int) {
     args = append([]string{"run", "--rm"}, args...)
     cmd := exec.Command("docker-compose", args...)
+    // TODO: split stdout & stderr
     out, err := cmd.CombinedOutput()
-    exitCode := 0
     result := string(out)
     if err != nil {
-        result = err.Error()
-        exitCode = cmd.ProcessState.ExitCode()
+        result += err.Error()
     }
-    return result, exitCode
+    return result, cmd.ProcessState.ExitCode()
 }
