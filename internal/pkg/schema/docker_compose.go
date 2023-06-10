@@ -15,21 +15,27 @@ const (
     DockerComposeVolumeDelimiter = ":"
 )
 
+type DockerComposeRootVolume map[string]map[string]interface{}
+
 type DockerCompose struct {
     Version string `yaml:"version"`
     Services map[string]DockerComposeService `yaml:"services"`
-    Volumes map[string]map[string]interface{} `yaml:"volumes,omitempty"`
+    Volumes DockerComposeRootVolume `yaml:"volumes,omitempty"`
 }
 
+type DockerComposeServiceBuild struct {
+    Context string `yaml:"context,omitempty"`
+    Dockerfile string `yaml:"dockerfile,omitempty"`
+    Args []string `yaml:"args,omitempty"`
+    Target string `yaml:"target,omitempty"`
+}
+
+type DockerComposeServiceVolume string
+
 type DockerComposeService struct {
-    Build struct {
-        Context string `yaml:"context,omitempty"`
-        Dockerfile string `yaml:"dockerfile,omitempty"`
-        Args []string `yaml:"args,omitempty"`
-        Target string `yaml:"target,omitempty"`
-    } `yaml:"build,omitempty"`
+    Build DockerComposeServiceBuild `yaml:"build,omitempty"`
     WorkingDir string `yaml:"working_dir,omitempty"`
-    Volumes []string `yaml:"volumes,omitempty"`
+    Volumes []DockerComposeServiceVolume `yaml:"volumes,omitempty"`
     EntryPoint string `yaml:"entrypoint,omitempty"`
     Command string `yaml:"command,omitempty"`
     User string `yaml:"user,omitempty"`
@@ -69,42 +75,96 @@ func ConvertDockerComposeYamlToStruct(root *yaml.Node) (*DockerCompose, error) {
     return loadDockerComposeByteData(buf.Bytes())
 }
 
-func (self *DockerCompose) isVolumeMounted(volume string) bool {
-    headPart := strings.Split(volume, DockerComposeVolumeDelimiter)[0]
-    _, ok := self.Volumes[headPart]
+func convertToHostAbsPathIfPathIsRel(path, hostDirPath string) (string, error) {
+    if filepath.IsAbs(path) {
+        return path, nil
+    }
+    absPath, err := filepath.Abs(filepath.Join(hostDirPath, path))
+    if err != nil {
+        return "", err
+    }
+    return absPath, nil
+}
+
+func (self *DockerComposeServiceBuild) convertRelPathToAbs(
+    dirPath string,
+) (*DockerComposeServiceBuild, error) {
+    result := *self
+    if self.Context != "" {
+        absPath, err := convertToHostAbsPathIfPathIsRel(self.Context, dirPath)
+        if err != nil {
+            return nil, err
+        }
+        result.Context = absPath
+    }
+    if self.Dockerfile != "" {
+        absPath, err := convertToHostAbsPathIfPathIsRel(self.Dockerfile, dirPath)
+        if err != nil {
+            return nil, err
+        }
+        result.Dockerfile = absPath
+    }
+    return &result, nil
+}
+
+func (self *DockerComposeServiceVolume) isVolumeMounted(
+    headPart string,
+    rootVolumes DockerComposeRootVolume,
+) bool {
+    _, ok := rootVolumes[headPart]
     return ok
 }
 
-func (self *DockerCompose) convertHostRelpath(volume string, dirPath string) (string, error) {
-    if self.isVolumeMounted(volume) {
-        return volume, nil
+func (self *DockerComposeServiceVolume) convertRelPathToAbs(
+    rootVolumes DockerComposeRootVolume,
+    dirPath string,
+) (*DockerComposeServiceVolume, error) {
+    volumeParts := strings.Split(string(*self), DockerComposeVolumeDelimiter)
+    if self.isVolumeMounted(volumeParts[0], rootVolumes) {
+        return self, nil
     }
-    volumeParts := strings.Split(volume, DockerComposeVolumeDelimiter)
     hostPath := volumeParts[0]
-    if filepath.IsAbs(hostPath) {
-        return volume, nil
-    }
 
-    hostAbsPath, err := filepath.Abs(filepath.Join(dirPath, hostPath))
+    hostAbsPath, err := convertToHostAbsPathIfPathIsRel(hostPath, dirPath)
     if err != nil {
-        return "", err
+        return nil, err
     }
     var convertedParts []string
     convertedParts = append(convertedParts, hostAbsPath)
     convertedParts = append(convertedParts, volumeParts[1:]...)
-    return strings.Join(convertedParts, DockerComposeVolumeDelimiter), nil
+    result := DockerComposeServiceVolume(strings.Join(convertedParts, DockerComposeVolumeDelimiter))
+    return &result, nil
 }
 
-func (self *DockerCompose) ConvertVolumeRelpathToAbs(dirPath string) (*DockerCompose, error) {
+func (self *DockerComposeService) convertRelPathToAbs(
+    rootVolumes DockerComposeRootVolume,
+    dirPath string,
+) (*DockerComposeService, error) {
+    result := *self
+    convertedBuild, err := self.Build.convertRelPathToAbs(dirPath)
+    if err != nil {
+        return nil, err
+    }
+    result.Build = *convertedBuild
+
+    for idx, volume := range self.Volumes {
+        convertedVolume, err := volume.convertRelPathToAbs(rootVolumes, dirPath)
+        if err != nil {
+            return nil, err
+        }
+        result.Volumes[idx] = *convertedVolume
+    }
+    return &result, nil
+}
+
+func (self *DockerCompose) ConvertRelPathToAbs(dirPath string) (*DockerCompose, error) {
     result := *self
     for name, service := range self.Services {
-        for idx, volume := range service.Volumes {
-            convertedVol, err := self.convertHostRelpath(volume, dirPath)
-            if err != nil {
-                return nil, err
-            }
-            result.Services[name].Volumes[idx] = convertedVol
+        convertedService, err := service.convertRelPathToAbs(self.Volumes, dirPath)
+        if err != nil {
+            return nil, err
         }
+        result.Services[name] = *convertedService
     }
     return &result, nil
 }
