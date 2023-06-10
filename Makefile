@@ -6,6 +6,10 @@ build:
 stat:
 	docker-compose run --rm -u "$$(id -u):$$(id -g)" go version -m ./bin/*
 
+.PHONY: update
+update:
+	docker compose run --rm -u "$$(id -u):$$(id -g)" go mod tidy
+
 .PHONY: clean
 clean:
 	docker-compose down && \
