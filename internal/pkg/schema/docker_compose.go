@@ -80,7 +80,7 @@ func (self *DockerComposeServiceBuild) convertRelPathToAbs(
         result.Context = absPath
     }
     if self.Dockerfile != "" {
-        absPath, err := convertToHostAbsPathIfPathIsRel(self.Dockerfile, dirPath)
+        absPath, err := convertToHostAbsPathIfPathIsRel(self.Dockerfile, result.Context)
         if err != nil {
             return nil, err
         }
