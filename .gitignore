@@ -32,4 +32,7 @@ go.work
 /bin/*
 !/bin/.gitkeep
 
+# ignore .env file
+/.env
+
 !.gitignore

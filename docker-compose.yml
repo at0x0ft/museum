@@ -12,10 +12,13 @@ x-general_config: &general_config
   environment:
     - HOME=/tmp
 
-
 services:
   build:
     <<: *general_config
+    environment:
+      - HOME=/tmp
+      - GOOS=${GOOS}
+      - GOARCH=${GOARGH}
     entrypoint: go build -o ./bin -ldflags "-s -w"
   run:
     <<: *general_config

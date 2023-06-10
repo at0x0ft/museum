@@ -17,26 +17,49 @@ VSCode docker remote development environment template collections.
 
 1. VSCode
 2. Docker (with Docker Buildkit)
-3. Docker Compose
+3. (optional) Make
 
 ## Quick Tutorial (Running Flow Example)
 
 0. Install all of the Requirements.
-1. Create `.devcontainer` directory & `skeleton.yml` in the directory. `skeleton.yml` example is below.
+1. Prepare `museum-collections` files for museum templates. For example, check out this repository: [museum-collections](https://github.com/at0x0ft/museum-collections) .
+2. Prepare `.env` file to specify the go build config parameters. e.g.
+   ```sh
+   GOOS='linux'
+   GOARCH='amd64'
+   ```
+3. Run commands below.
+   ```sh
+   make build
+   ```
+4. Create `.devcontainer` directory & `skeleton.yml` in the directory. `skeleton.yml` example is below.
    ```yml
    ---
-   version: "0"
+   arguments:
+     vscode_devcontainer:
+       project_name: test project.
+       attach_service: base_shell
+     docker_compose:
+       project_prefix: museum_dev
+       files:
+         - ../src/docker-compose.yml
+         - ./docker-compose.yml
+       vscode_extension_volumes:
+         normal: vscode-extensions
+         insider: vscode-insider-extensions
 
-   base_shell:
-     path: ./services/base_shell
+   collections:
+     path: ../../museum-collections
+     list:
+       - path: ./base_shell
    ```
-2. Run `mix` command giving input and output base `.devcontainer` directory as argument. This command will generate merged multiple `.devcontainer/seed.yml`(s) from `.devcontainer/skeleton.yml`!
+5. Run `mix` command giving input and output base `.devcontainer` directory as argument. This command will generate merged multiple `.devcontainer/seed.yml`(s) from `.devcontainer/skeleton.yml`!
    ```sh
-   docker-compose run --rm museum mix test_project/.devcontainer
+   ./bin/museum mix test_project/.devcontainer
    ```
-3. Check generated `.devconainer/seed.yml` out! This is a blue print of `devcontainer.json` & `docker-compose.yml` for VSCode Remote Development for Docker. Fix it at your preference.
-4. Run `deploy` command giving input and output base `.devcontainer` directory as argument. This command will generate canonical `.devcontainer/devcontainer.json` & `.devcontainer/docker-composer.yml` from `.devcontainer/seed.yml`!
+6. Check generated `.devconainer/seed.yml` out! This is a blue print of `devcontainer.json` & `docker-compose.yml` for VSCode Remote Development for Docker. Fix it at your preference.
+7. Run `deploy` command giving input and output base `.devcontainer` directory as argument. This command will generate canonical `.devcontainer/devcontainer.json` & `.devcontainer/docker-composer.yml` from `.devcontainer/seed.yml`!
    ```sh
-   docker-compose run --rm museum deploy test_project/.devcontainer
+   ./bin/museum deploy test_project/.devcontainer
    ```
-5. Check generated `.devconainer/devcontainer.json` & `.devcontainer/docker-compose.yml` out!
+8. Check generated `.devconainer/devcontainer.json` & `.devcontainer/docker-compose.yml` out!
