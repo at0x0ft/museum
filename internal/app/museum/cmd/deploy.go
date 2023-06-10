@@ -67,7 +67,7 @@ func deploy(args []string) {
         fmt.Println(err)
         os.Exit(1)
     }
-    evaluatedDockerCompose, err := dockerCompose.ConvertVolumeRelpathToAbs(devcontainerDirPath)
+    evaluatedDockerCompose, err := dockerCompose.ConvertRelPathToAbs(devcontainerDirPath)
     if err != nil {
         fmt.Println(err)
         os.Exit(1)
