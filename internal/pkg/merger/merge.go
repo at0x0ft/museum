@@ -37,16 +37,14 @@ func Merge(skeleton *schema.Skeleton) (*schema.Seed, error) {
 }
 
 func getCommonVariables(skeleton *schema.Skeleton) (*yaml.Node, error) {
-    argumentsKeyNode, argumentsValueNode, err := skeleton.GetRawArguments()
-    if err != nil {
-        return nil, err
-    }
+    argumentsKey := skeleton.Arguments.GetKey()
+    argumentsValue := yaml.Node(skeleton.Arguments)
 
     variablesNode := createNewMappingNode()
     variablesNode.Content = append(
         variablesNode.Content,
-        argumentsKeyNode,
-        argumentsValueNode,
+        argumentsKey,
+        &argumentsValue,
     )
     return variablesNode, nil
 }
@@ -86,7 +84,12 @@ func loadSeeds(skeleton *schema.Skeleton) ([]seedMetadata, error) {
             Name: collection.Name,
             Data: seed,
         }
-        if newSeedMetadata.Name == skeleton.GetCommonAttachedCollectionName() {
+
+        commonAttachedCollectionName, err := skeleton.Arguments.GetAttachServiceName()
+        if err != nil {
+            return nil, err
+        }
+        if newSeedMetadata.Name == commonAttachedCollectionName {
             result = append(result, newSeedMetadata)
         } else {
             restSeeds = append(restSeeds, newSeedMetadata)

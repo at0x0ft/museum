@@ -1,7 +1,6 @@
 package schema
 
 import (
-    "bytes"
     "fmt"
     "os"
     "strings"
@@ -21,6 +20,7 @@ const (
     VSCODE_DEVCONTAINER_KEY = ARGUMENTS_KEY + ".vscode_devcontainer"
     DEVCONTAINER_PROJECT_NAME_KEY = VSCODE_DEVCONTAINER_KEY + ".project_name"
     DEVCONTAINER_ATTACH_SERVICE_KEY = VSCODE_DEVCONTAINER_KEY + ".attach_service"
+    DEVCONTAINER_SOURCE_PATH_KEY = VSCODE_DEVCONTAINER_KEY + ".source_path"
     DOCKER_COMPOSE_KEY = ARGUMENTS_KEY + ".docker_compose"
     DOCKER_COMPOSE_PROJECT_PREFIX_KEY = DOCKER_COMPOSE_KEY + ".project_prefix"
     DOCKER_COMPOSE_FILES_KEY = DOCKER_COMPOSE_KEY + ".files"
@@ -29,20 +29,23 @@ const (
     VSCODE_INSIDER_EXTENSION_VOLUME_NAME_KEY = VSCODE_EXTENSION_VOLUMES_KEY + ".insider"
 )
 
-type Arguments struct {
-    VSCodeDevcontainer struct {
-        ProjectName string `yaml:"project_name"`
-        AttachService string `yaml:"attach_service"`
-    } `yaml:"vscode_devcontainer"`
-    DockerCompose struct {
-        ProjectPrefix string `yaml:"project_prefix"`
-        Files []string `yaml:"files"`
-        VSCodeExtensionVolumes struct {
-            Normal string `yaml:"normal"`
-            Insider string `yaml:"insider"`
-        } `yaml:"vscode_extension_volumes"`
-    } `yaml:"docker_compose"`
-}
+// type Arguments struct {
+//     VSCodeDevcontainer struct {
+//         ProjectName string `yaml:"project_name"`
+//         AttachService string `yaml:"attach_service"`
+//         SourcePath string `yaml:"source_path"`
+//     } `yaml:"vscode_devcontainer"`
+//     DockerCompose struct {
+//         ProjectPrefix string `yaml:"project_prefix"`
+//         Files []string `yaml:"files"`
+//         VSCodeExtensionVolumes struct {
+//             Normal string `yaml:"normal"`
+//             Insider string `yaml:"insider"`
+//         } `yaml:"vscode_extension_volumes"`
+//     } `yaml:"docker_compose"`
+// }
+
+type Arguments yaml.Node
 
 type Collection struct {
     Name string `yaml:"name"`
@@ -61,6 +64,22 @@ type Skeleton struct {
     Collections Collections `yaml:"collections"`
 }
 
+func (self *Arguments) UnmarshalYAML(n *yaml.Node) error {
+    self.Kind = n.Kind
+    self.Style = n.Style
+    self.Tag = n.Tag
+    self.Value = n.Value
+    self.Anchor = n.Anchor
+    self.Alias = n.Alias
+    self.Content = n.Content
+    self.HeadComment = n.HeadComment
+    self.LineComment = n.LineComment
+    self.FootComment = n.FootComment
+    self.Line = n.Line
+    self.Column = n.Column
+    return nil
+}
+
 func LoadSkeleton(dirPath string) (*Skeleton, error) {
     dirAbsPath, err := filepath.Abs(dirPath)
     if err != nil {
@@ -71,7 +90,8 @@ func LoadSkeleton(dirPath string) (*Skeleton, error) {
     if err != nil {
         return nil, err
     }
-    var data *Skeleton
+
+    var data Skeleton
     if err := yaml.Unmarshal(buf, &data); err != nil {
         return nil, err
     }
@@ -85,21 +105,28 @@ func resolvePath(baseAbsDir string, targetPath string) string {
     return filepath.Join(baseAbsDir, targetPath)
 }
 
-func (self *Skeleton) attachedServiceExists() bool {
+func (self *Skeleton) serviceExists(serviceName string) bool {
     serviceNameSet := map[string]struct{}{}
     for _, collection := range self.Collections.List {
         serviceNameSet[collection.Name] = struct{}{}
     }
-    _, ok := serviceNameSet[self.GetCommonAttachedCollectionName()]
+    _, ok := serviceNameSet[serviceName]
     return ok
 }
 
 func (self *Skeleton) validate() error {
-    if !self.attachedServiceExists() {
+    attachedService, err := self.Arguments.GetAttachServiceName()
+    if err != nil {
+        return err
+    }
+    if !self.serviceExists(attachedService) {
+        if err != nil {
+            return err
+        }
         return fmt.Errorf(
             "[Error] '%s' specified value (= '%s') collection is not found!",
             DEVCONTAINER_ATTACH_SERVICE_KEY,
-            self.GetCommonAttachedCollectionName(),
+            attachedService,
         )
     }
     return nil
@@ -111,10 +138,6 @@ func (self *Skeleton) getCanonical(baseAbsDir string) (*Skeleton, error) {
         return nil, err
     }
 
-    arguments, err := self.Arguments.getCanonical(baseAbsDir)
-    if err != nil {
-        return nil, err
-    }
     collections, err := self.Collections.getCanonical(baseAbsDir)
     if err != nil {
         return nil, err
@@ -122,7 +145,7 @@ func (self *Skeleton) getCanonical(baseAbsDir string) (*Skeleton, error) {
 
     result := &Skeleton{
         Version: self.Version,
-        Arguments: *arguments,
+        Arguments: self.Arguments,
         Collections: *collections,
     }
     if err := result.validate(); err != nil {
@@ -212,94 +235,116 @@ func (self *Skeleton) filterOptionalArguments(arguments *yaml.Node) (*yaml.Node,
     return arguments, nil
 }
 
-func (self *Skeleton) GetRawArguments() (*yaml.Node, *yaml.Node, error) {
-    var buf bytes.Buffer
-    yamlEncoder := yaml.NewEncoder(&buf)
-    defer yamlEncoder.Close()
-    yamlEncoder.SetIndent(2)
-    yamlEncoder.Encode(&self)
-
-    var data yaml.Node
-    if err := yaml.Unmarshal(buf.Bytes(), &data); err != nil {
-        return nil, nil, err
+func (self *Arguments) validateVSCodeDevContainer(key, value *yaml.Node) error {
+    if key.Value != "vscode_devcontainer" {
+        return nil
     }
-    var keyNode, valueNode *yaml.Node
-    for index := 0; index < len(data.Content[0].Content); index += 2 {
-        if data.Content[0].Content[index].Value == ARGUMENTS_KEY {
-            keyNode = data.Content[0].Content[index]
-            valueNode = data.Content[0].Content[index + 1]
-            break
-        }
-    }
-    if keyNode == nil && valueNode == nil {
-        return nil, nil, fmt.Errorf(
-            "[Error] '%s' is not found in skeleton.yml!",
-            ARGUMENTS_KEY,
-        )
-    }
-
-    var err error
-    valueNode, err = self.filterOptionalArguments(valueNode)
-    if err != nil {
-        return nil, nil, err
-    }
-    return keyNode, valueNode, nil
-}
-
-func (self *Skeleton) GetCommonAttachedCollectionName() string {
-    return self.Arguments.VSCodeDevcontainer.AttachService
-}
-
-func (self *Arguments) validate() error {
-    if self.VSCodeDevcontainer.ProjectName == "" {
-        return fmt.Errorf(
-            "[Error] '%s' is specified!",
-            DEVCONTAINER_PROJECT_NAME_KEY,
-        )
-    } else if self.VSCodeDevcontainer.AttachService == "" {
-        return fmt.Errorf(
-            "[Error] '%s' is specified!",
-            DEVCONTAINER_ATTACH_SERVICE_KEY,
-        )
-    } else if self.DockerCompose.ProjectPrefix == "" {
-        return fmt.Errorf(
-            "[Error] '%s' is specified!",
-            DOCKER_COMPOSE_PROJECT_PREFIX_KEY,
-        )
-    }
-    for _, path := range self.DockerCompose.Files {
-        if path == "" {
+    for index := 0; index < len(value.Content); index += 2 {
+        childKey := value.Content[index]
+        childValue := value.Content[index + 1]
+        if childKey.Value == "project_name" && childValue.Value == "" {
             return fmt.Errorf(
-                "[Error] 'path' is not specified in '%s'!",
-                DOCKER_COMPOSE_FILES_KEY,
+                "[Error] '%s' is not specified!",
+                DEVCONTAINER_PROJECT_NAME_KEY,
+            )
+        } else if childKey.Value == "attach_service" && childValue.Value == "" {
+            return fmt.Errorf(
+                "[Error] '%s' is not specified!",
+                DEVCONTAINER_ATTACH_SERVICE_KEY,
+            )
+        } else if childKey.Value == "source_path" && childValue.Value == "" {
+            return fmt.Errorf(
+                "[Error] '%s' is not specified!",
+                DEVCONTAINER_SOURCE_PATH_KEY,
             )
         }
     }
     return nil
 }
 
-func (self *Arguments) getCanonical(baseAbsDir string) (*Arguments, error) {
-    if !filepath.IsAbs(baseAbsDir) {
-        err := fmt.Errorf("[Error] baseAbsDir = '%v' is not absolute path.", baseAbsDir)
-        return nil, err
+func (self *Arguments) validateDockerCompose(key, value *yaml.Node) error {
+    if key.Value != "docker_compose" {
+        return nil
     }
-    if err := self.validate(); err != nil {
-        return nil, err
+    for index := 0; index < len(value.Content); index += 2 {
+        childKey := value.Content[index]
+        childValue := value.Content[index + 1]
+        if childKey.Value == "project_prefix" && childValue.Value == "" {
+            return fmt.Errorf(
+                "[Error] '%s' is not specified!",
+                DOCKER_COMPOSE_PROJECT_PREFIX_KEY,
+            )
+        } else if childKey.Value == "files" {
+            for _, n := range childKey.Content {
+                path := n.Value
+                if path == "" {
+                    return fmt.Errorf(
+                        "[Error] 'path' is not specified in '%s'!",
+                        DOCKER_COMPOSE_FILES_KEY,
+                    )
+                }
+            }
+        }
     }
+    return nil
+}
 
-    // keep given path as relative
-    // note: devcontainer.json is referred by both host & container.
-    // result := *self
-    // var dockerComposeAbsPaths []string
-    // for _, path := range self.DockerCompose.Files {
-    //     dockerComposeAbsPaths = append(
-    //         dockerComposeAbsPaths,
-    //         resolvePath(baseAbsDir, path),
-    //     )
-    // }
-    // result.DockerCompose.Files = dockerComposeAbsPaths
-    // return &result, nil
-    return self, nil
+func (self *Arguments) validate() error {
+    for index := 0; index < len(self.Content); index += 2 {
+        key := self.Content[index]
+        value := self.Content[index + 1]
+        if err := self.validateVSCodeDevContainer(key, value); err != nil {
+            return err
+        }
+        if err := self.validateDockerCompose(key, value); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+func (self *Arguments) GetKey() *yaml.Node {
+    return &yaml.Node{Kind:yaml.ScalarNode, Value:ARGUMENTS_KEY}
+}
+
+func (self *Arguments) GetAttachServiceName() (string, error) {
+    for i := 0; i < len(self.Content); i += 2 {
+        key := self.Content[i]
+        value := self.Content[i + 1]
+        if key.Value == "vscode_devcontainer" {
+            for j := 0; j < len(value.Content); j += 2 {
+                childKey := value.Content[j]
+                childValue := value.Content[j + 1]
+                if childKey.Value == "attach_service" {
+                    return childValue.Value, nil
+                }
+            }
+        }
+    }
+    return "", fmt.Errorf(
+        "[Error] '%s' is not found!",
+        DOCKER_COMPOSE_PROJECT_PREFIX_KEY,
+    )
+}
+
+func (self *Arguments) getComposeProjectPrefix() (string, error) {
+    for i := 0; i < len(self.Content); i += 2 {
+        key := self.Content[i]
+        value := self.Content[i + 1]
+        if key.Value == "docker_compose" {
+            for j := 0; j < len(value.Content); j += 2 {
+                childKey := value.Content[j]
+                childValue := value.Content[j + 1]
+                if childKey.Value == "project_prefix" {
+                    return childValue.Value, nil
+                }
+            }
+        }
+    }
+    return "", fmt.Errorf(
+        "[Error] '%s' is not found!",
+        DOCKER_COMPOSE_PROJECT_PREFIX_KEY,
+    )
 }
 
 func (self *Collections) validate() error {

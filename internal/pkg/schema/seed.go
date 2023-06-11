@@ -127,16 +127,6 @@ func (self *Seed) GetComposeProjectPrefix() (string, error) {
     if err != nil {
         return "", err
     }
-    var buf bytes.Buffer
-    yamlEncoder := yaml.NewEncoder(&buf)
-    defer yamlEncoder.Close()
-    yamlEncoder.SetIndent(2)
-    yamlEncoder.Encode(&commonArgumentsRootNode)
-
-    var data *Arguments
-    if err := yaml.Unmarshal(buf.Bytes(), &data); err != nil {
-        return "", err
-    }
-
-    return data.DockerCompose.ProjectPrefix, nil
+    arguments := Arguments(*commonArgumentsRootNode)
+    return (&arguments).getComposeProjectPrefix()
 }
