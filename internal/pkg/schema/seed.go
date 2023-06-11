@@ -18,7 +18,7 @@ const (
 
 type Configs struct {
     VSCodeDevcontainer yaml.Node `yaml:"vscode_devcontainer"`
-    DockerCompose yaml.Node `yaml:"docker_compose"`
+    DockerCompose yaml.Node `yaml:"docker_compose,omitempty"`
 }
 
 type Seed struct {
@@ -129,4 +129,9 @@ func (self *Seed) GetComposeProjectPrefix() (string, error) {
     }
     arguments := Arguments(*commonArgumentsRootNode)
     return (&arguments).getComposeProjectPrefix()
+}
+
+func (self *Seed) FilterDockerCompose() {
+    var emptyContent []*yaml.Node
+    self.Configs.DockerCompose.Content = emptyContent
 }
