@@ -48,9 +48,10 @@ const (
 type Arguments yaml.Node
 
 type Collection struct {
-    Name string `yaml:"name"`
+    Name string `yaml:"name,omitempty"`
     Path string `yaml:"path"`
-    User string `yaml:"user"`
+    // TODO: default value is false
+    NoCompose bool `yaml:"no_compose"`
 }
 
 type Collections struct {

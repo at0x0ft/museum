@@ -80,6 +80,10 @@ func loadSeeds(skeleton *schema.Skeleton) ([]seedMetadata, error) {
         if err != nil {
             return nil, err
         }
+
+        if collection.NoCompose {
+            seed.FilterDockerCompose()
+        }
         newSeedMetadata := seedMetadata{
             Name: collection.Name,
             Data: seed,
