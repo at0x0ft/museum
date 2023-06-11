@@ -331,7 +331,7 @@ func (self *Arguments) getComposeProjectPrefix() (string, error) {
     for i := 0; i < len(self.Content); i += 2 {
         key := self.Content[i]
         value := self.Content[i + 1]
-        if key.Value == "vscode_devcontainer" {
+        if key.Value == "docker_compose" {
             for j := 0; j < len(value.Content); j += 2 {
                 childKey := value.Content[j]
                 childValue := value.Content[j + 1]
