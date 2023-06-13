@@ -15,55 +15,39 @@ import (
     "github.com/at0x0ft/museum/internal/pkg/util"
 )
 
-// mixCmd represents the mix command
-var mixCmd = &cobra.Command{
-    Use:   "mix",
-    Short: "Mix seed.yml from skeleton.yml.",
-    Long: `mix is a subcommand which generate seed.yml from skeleton.yml.
+func newMixCommand() *cobra.Command {
+    cmd := &cobra.Command{
+        Use:   "mix",
+        Short: "Mix seed.yml from skeleton.yml.",
+        Long: `mix is a subcommand which generate seed.yml from skeleton.yml.
 skeleton.yml is a brief configuration for collections which you want to use as material.
 If you want to generate devcontainer.json & docker-compose.yml from config.yml,
 please run subcommand "deploy" after running this command.`,
-    Run: func(cmd *cobra.Command, args []string) {
-        mix(args)
-        fmt.Println("Finish mixing!")
-    },
+        RunE: func(cmd *cobra.Command, args []string) error {
+            return mix(args)
+        },
+    }
+    return cmd
 }
 
-func init() {
-    rootCmd.AddCommand(mixCmd)
-
-    // Here you will define your flags and configuration settings.
-
-    // Cobra supports Persistent Flags which will work for this command
-    // and all subcommands, e.g.:
-    // mixCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-    // Cobra supports local flags which will only run when this command
-    // is called directly, e.g.:
-    // mixCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-// command body
-
-func mix(args []string) {
+func mix(args []string) error {
     // assert len(args) == 1
     dstRootDir := args[0]
 
     skeleton, err := schema.LoadSkeleton(dstRootDir)
     if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        return err
     }
 
     if err := mergeSeeds(skeleton, dstRootDir); err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        return err
     }
 
     if err := copyDockerFiles(skeleton, dstRootDir); err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        return err
     }
+    fmt.Println("Finish mixing!")
+    return nil
 }
 
 func mergeSeeds(skeleton *schema.Skeleton, dstRootDir string) error {
