@@ -16,76 +16,55 @@ import (
     "github.com/at0x0ft/museum/internal/pkg/util"
 )
 
-// deployCmd represents the deploy command
-var deployCmd = &cobra.Command{
-    Use:   "deploy",
-    Short: "Deploy files from config.yml.",
-    Long: `deploy is a subcommand which generate devcontainer.json & docker-compose.yml from config.yml.
+func newDeployCommand() *cobra.Command {
+    cmd := &cobra.Command{
+        Use:   "deploy",
+        Short: "Deploy files from seed.yml.",
+        Long: `deploy is a subcommand which generate devcontainer.json & docker-compose.yml from config.yml.
 config.yml is generated with running subcommand "mix".`,
-    Run: func(cmd *cobra.Command, args []string) {
-        deploy(args)
-        fmt.Println("Finish deploying!")
-    },
+        RunE: func(cmd *cobra.Command, args []string) error {
+            return deploy(args)
+        },
+    }
+    return cmd
 }
 
-func init() {
-    rootCmd.AddCommand(deployCmd)
-
-    // Here you will define your flags and configuration settings.
-
-    // Cobra supports Persistent Flags which will work for this command
-    // and all subcommands, e.g.:
-    // deployCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-    // Cobra supports local flags which will only run when this command
-    // is called directly, e.g.:
-    // deployCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-// command body
-
-func deploy(args []string) {
+func deploy(args []string) error {
     devcontainerDirPath := args[0]
     data, err := schema.LoadSeed(devcontainerDirPath)
     if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        return err
     }
 
     variables, err := variable.Parse(data)
     if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        return err
     }
     evaluatedSeed, err := evaluateSeed(data, variables)
     if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        return err
     }
     dockerCompose, err := schema.ConvertDockerComposeYamlToStruct(&evaluatedSeed.Configs.DockerCompose)
     if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        return err
     }
     evaluatedDockerCompose, err := dockerCompose.ConvertRelPathToAbs(devcontainerDirPath)
     if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        return err
     }
 
     if err := deployComposeConfig(evaluatedSeed, devcontainerDirPath); err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        return err
     }
 
     if err := evaluatedSeed.WriteDevcontainer(devcontainerDirPath); err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        return err
     }
     if err := evaluatedDockerCompose.Write(devcontainerDirPath); err != nil {
-        fmt.Println(err)
-        os.Exit(1)
+        return err
     }
+    fmt.Println("Finish deploying!")
+    return nil
 }
 
 func evaluateSeed(seed *schema.Seed, variables map[string]*yaml.Node) (*schema.Seed, error) {
