@@ -2,6 +2,10 @@
 build:
 	docker compose run --rm -u "$$(id -u):$$(id -g)" build github.com/at0x0ft/museum/cmd/museum
 
+.PHONY: build_with_root
+build_with_root:
+	docker compose run --rm build github.com/at0x0ft/museum/cmd/museum
+
 .PHONY: stat
 stat:
 	docker compose run --rm -u "$$(id -u):$$(id -g)" go version -m ./bin/*
